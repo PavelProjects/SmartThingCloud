@@ -12,7 +12,7 @@
     <artifactId>smart_thing_cloud</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>smart_thing_cloud</name>
-    <description>Smart thing cloud server app</description>\
+    <description>Smart thing cloud server app</description>
 
     <properties>
         <java.version>17</java.version>
