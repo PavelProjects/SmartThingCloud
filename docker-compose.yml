@@ -1,0 +1,24 @@
+version: '3.8'
+
+networks:
+  cache_network:
+    driver: bridge
+    name: smart_thing_network
+
+services:
+  db:
+    container_name: db
+    image: postgres:13.3
+    networks:
+      cache_network:
+        aliases:
+          - smart_thing_network
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - ./db/:/docker-entrypoint-initdb.d/
