@@ -12,13 +12,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.pobopo.smartthing.cloud.context.ContextHolder;
 import ru.pobopo.smartthing.cloud.controller.model.CreateGatewayRequest;
 import ru.pobopo.smartthing.cloud.controller.model.GenerateTokenRequest;
 import ru.pobopo.smartthing.cloud.controller.model.SendToQueueRequest;
 import ru.pobopo.smartthing.cloud.controller.model.TokenResponse;
-import ru.pobopo.smartthing.cloud.controller.model.TopicInfoResponse;
 import ru.pobopo.smartthing.cloud.dto.GatewayDto;
+import ru.pobopo.smartthing.cloud.dto.GatewayQueueInfo;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.mapper.GatewayMapper;
@@ -57,13 +56,8 @@ public class GatewayController {
     }
 
     @GetMapping("/queue")
-    public TopicInfoResponse getQueue() throws ValidationException, IOException, TimeoutException {
-        if (ContextHolder.getCurrentGateway() == null) {
-            throw new ValidationException("No gateway! Wrong token?");
-        }
-        String name = ContextHolder.getCurrentGateway().getName();
-        messageBrokerService.createQueue(name); // do it in gateway service
-        return new TopicInfoResponse(name);
+    public GatewayQueueInfo getQueue() throws ValidationException, IOException, TimeoutException {
+        return gatewayService.getQueueInfo();
     }
 
     @PostMapping("/queue/send")

@@ -74,6 +74,8 @@ public class RabbitAuthServiceImpl implements RabbitAuthService {
             return ALLOW;
         }
         Optional<GatewayEntity> gateway = gatewayRepository.findById(check.getUsername());
+        // todo resource=exchange, name=amq.default, permission=write -> allow
+        // (resource=queue, name=test_gateway_123, permission=read) -> check gateway
         return gateway.isPresent() ? ALLOW : DENY;
     }
 

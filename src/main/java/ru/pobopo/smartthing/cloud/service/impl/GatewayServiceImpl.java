@@ -1,13 +1,17 @@
 package ru.pobopo.smartthing.cloud.service.impl;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeoutException;
 import javax.naming.AuthenticationException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import ru.pobopo.smartthing.cloud.context.ContextHolder;
+import ru.pobopo.smartthing.cloud.dto.GatewayQueueInfo;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
@@ -18,11 +22,17 @@ import ru.pobopo.smartthing.cloud.service.GatewayService;
 public class GatewayServiceImpl implements GatewayService {
     private final GatewayRepository gatewayRepository;
     private final UserRepository userRepository;
+    private final MessageBrokerService messageBrokerService;
 
     @Autowired
-    public GatewayServiceImpl(GatewayRepository gatewayRepository, UserRepository userRepository) {
+    public GatewayServiceImpl(
+        GatewayRepository gatewayRepository,
+        UserRepository userRepository,
+        MessageBrokerService messageBrokerService
+    ) {
         this.gatewayRepository = gatewayRepository;
         this.userRepository = userRepository;
+        this.messageBrokerService = messageBrokerService;
     }
 
     @Override
@@ -44,6 +54,24 @@ public class GatewayServiceImpl implements GatewayService {
 
         gatewayRepository.save(gatewayEntity);
         return gatewayEntity;
+    }
+
+    @Override
+    public GatewayQueueInfo getQueueInfo() throws ValidationException, IOException, TimeoutException {
+        GatewayEntity entity = ContextHolder.getCurrentGateway();
+        if (entity == null) {
+            throw new ValidationException("No gateway! Wrong token?");
+        }
+        if (StringUtils.isBlank(entity.getQueueInName()) || StringUtils.isBlank(entity.getQueueOutName())) {
+            String prefix = entity.getId() + "_" + entity.getName();
+            entity.setQueueInName(prefix + "_in");
+            entity.setQueueOutName(prefix + "_out");
+            gatewayRepository.save(entity);
+
+            messageBrokerService.createQueue(entity.getQueueInName());
+            messageBrokerService.createQueue(entity.getQueueOutName());
+        }
+        return new GatewayQueueInfo(entity.getQueueInName(), entity.getQueueOutName());
     }
 
     @Override

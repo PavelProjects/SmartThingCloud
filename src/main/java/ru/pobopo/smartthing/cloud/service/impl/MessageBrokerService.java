@@ -23,7 +23,6 @@ public class MessageBrokerService {
     public void createQueue(String queueName) throws IOException, TimeoutException {
         try (Connection connection = connectionFactory.newConnection()) {
             Channel channel = connection.createChannel();
-
             channel.queueDeclare(queueName, false, false, false, null);
         }
     }

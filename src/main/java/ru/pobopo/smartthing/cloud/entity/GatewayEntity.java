@@ -31,6 +31,12 @@ public class GatewayEntity {
     @Column
     private String description;
 
+    @Column(name = "queue_in_name")
+    private String queueInName;
+
+    @Column(name = "queue_out_name")
+    private String queueOutName;
+
     @Column(name = "creation_date")
     private LocalDateTime creationDate;
 
