@@ -28,6 +28,7 @@ public class SecurityConfig {
 
         http.authorizeHttpRequests()
             .antMatchers("/user/auth").permitAll()
+            .antMatchers("/rabbit/auth/**").permitAll()
             .anyRequest().authenticated();
 
         http.addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class);

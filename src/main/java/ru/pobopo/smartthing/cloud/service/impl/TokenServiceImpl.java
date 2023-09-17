@@ -86,6 +86,7 @@ public class TokenServiceImpl implements TokenService {
         return generateToken(tokenInfoEntity);
     }
 
+    //todo add cache
     @Override
     public UserDetails validateToken(String token) throws AccessDeniedException {
         if (StringUtils.isBlank(token)) {

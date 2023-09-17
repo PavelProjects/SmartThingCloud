@@ -1,7 +1,9 @@
 package ru.pobopo.smartthing.cloud.controller;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeoutException;
 import javax.naming.AuthenticationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.pobopo.smartthing.cloud.context.ContextHolder;
 import ru.pobopo.smartthing.cloud.controller.model.CreateGatewayRequest;
 import ru.pobopo.smartthing.cloud.controller.model.GenerateTokenRequest;
+import ru.pobopo.smartthing.cloud.controller.model.SendToQueueRequest;
 import ru.pobopo.smartthing.cloud.controller.model.TokenResponse;
 import ru.pobopo.smartthing.cloud.controller.model.TopicInfoResponse;
 import ru.pobopo.smartthing.cloud.dto.GatewayDto;
@@ -22,6 +25,7 @@ import ru.pobopo.smartthing.cloud.mapper.GatewayMapper;
 import ru.pobopo.smartthing.cloud.service.GatewayService;
 import ru.pobopo.smartthing.cloud.service.TokenService;
 import ru.pobopo.smartthing.cloud.service.impl.AuthoritiesService;
+import ru.pobopo.smartthing.cloud.service.impl.MessageBrokerService;
 
 @RestController
 @RequestMapping("/gateway")
@@ -29,12 +33,19 @@ public class GatewayController {
     private final GatewayService gatewayService;
     private final GatewayMapper gatewayMapper;
     private final TokenService tokenService;
+    private final MessageBrokerService messageBrokerService;
 
     @Autowired
-    public GatewayController(GatewayService gatewayService, GatewayMapper gatewayMapper, TokenService tokenService) {
+    public GatewayController(
+        GatewayService gatewayService,
+        GatewayMapper gatewayMapper,
+        TokenService tokenService,
+        MessageBrokerService messageBrokerService
+    ) {
         this.gatewayService = gatewayService;
         this.gatewayMapper = gatewayMapper;
         this.tokenService = tokenService;
+        this.messageBrokerService = messageBrokerService;
     }
 
     @PutMapping("/token/generate")
@@ -45,14 +56,21 @@ public class GatewayController {
         );
     }
 
-    @GetMapping("/topic")
-    public TopicInfoResponse getTopic() throws ValidationException {
+    @GetMapping("/queue")
+    public TopicInfoResponse getQueue() throws ValidationException, IOException, TimeoutException {
         if (ContextHolder.getCurrentGateway() == null) {
             throw new ValidationException("No gateway! Wrong token?");
         }
         String name = ContextHolder.getCurrentGateway().getName();
-        return new TopicInfoResponse("/topic_" + name);
+        messageBrokerService.createQueue(name); // do it in gateway service
+        return new TopicInfoResponse(name);
     }
+
+    @PostMapping("/queue/send")
+    public void sendToQueue(@RequestBody SendToQueueRequest sendToQueueRequest) throws IOException, TimeoutException {
+        messageBrokerService.sendToQueue(sendToQueueRequest.getGatewayId(), sendToQueueRequest.getMessage());
+    }
+
 
     @PostMapping("/create")
     public GatewayDto createGateway(@RequestBody CreateGatewayRequest request) throws AuthenticationException, ValidationException {

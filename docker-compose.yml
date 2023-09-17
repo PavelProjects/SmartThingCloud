@@ -21,7 +21,7 @@ services:
     ports:
       - "${DB_PORT}:5432"
     volumes:
-      - ./db/:/docker-entrypoint-initdb.d/
+      - ./docker/db/:/docker-entrypoint-initdb.d/
   app:
     container_name: smart-thing-cloud
     build:
@@ -43,3 +43,17 @@ services:
       SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
       SPRING_JPA_HIBERNATE_DDL_AUTO: none
       SPRING_JPA_HIBERNATE_SHOW_SQL: false
+      BROKER_HOST: rabbitmq
+      BROKER_USER: ${BROKER_USER}
+      BROKER_PASSWORD: ${BROKER_PASSWORD}
+  rabbitmq:
+    build:
+      context: ./docker/rabbitmq
+      dockerfile: Dockerfile
+    hostname: rabbitmq
+    volumes:
+      #      - ./rabbitmq:/var/lib/rabbitmq
+      - ./docker/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.config
+    ports:
+      - 15672:15672
+      - 5672:5672
