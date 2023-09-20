@@ -47,9 +47,14 @@ services:
       BROKER_USER: ${BROKER_USER}
       BROKER_PASSWORD: ${BROKER_PASSWORD}
   rabbitmq:
+    container_name: rabbitmq
     build:
       context: ./docker/rabbitmq
       dockerfile: Dockerfile
+    networks:
+      cache_network:
+        aliases:
+          - smart_thing_network
     hostname: rabbitmq
     volumes:
       #      - ./rabbitmq:/var/lib/rabbitmq

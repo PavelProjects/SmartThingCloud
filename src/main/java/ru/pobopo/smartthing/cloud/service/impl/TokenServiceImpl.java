@@ -6,6 +6,7 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
@@ -106,6 +107,9 @@ public class TokenServiceImpl implements TokenService {
             throw new AccessDeniedException("Token expired!");
         }
 
+        String ownerLogin = jwtTokenUtil.getClaimFromToken(token, claims -> (String) claims.get(OWNER_CLAIM));
+        UserDetails user = userDetailsService.loadUserByUsername(ownerLogin);
+
         if (StringUtils.equals(type, TokenType.GATEWAY.getName())) {
             String gatewayId = jwtTokenUtil.getClaimFromToken(token, claims -> (String) claims.get(GATEWAY_CLAIM));
             Optional<GatewayEntity> gateway = gatewayRepository.findById(gatewayId);
@@ -113,10 +117,12 @@ public class TokenServiceImpl implements TokenService {
                 throw new AccessDeniedException("Gateway not found");
             }
             ContextHolder.setCurrentGateway(gateway.get());
+//            user.getAuthorities().add(new SimpleGrantedAuthority("GATEWAY"));
+        } else {
+//            user.getAuthorities().add(new SimpleGrantedAuthority("USER"));
         }
 
-        String ownerLogin = jwtTokenUtil.getClaimFromToken(token, claims -> (String) claims.get(OWNER_CLAIM));
-        return userDetailsService.loadUserByUsername(ownerLogin);
+        return user;
     }
 
     @Override

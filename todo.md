@@ -1,1 +1,2 @@
 - add user roles
+- check permits in rabbitmq auth service

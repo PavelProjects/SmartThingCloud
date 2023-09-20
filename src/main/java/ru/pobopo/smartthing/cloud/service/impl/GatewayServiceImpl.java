@@ -22,13 +22,13 @@ import ru.pobopo.smartthing.cloud.service.GatewayService;
 public class GatewayServiceImpl implements GatewayService {
     private final GatewayRepository gatewayRepository;
     private final UserRepository userRepository;
-    private final MessageBrokerService messageBrokerService;
+    private final MessageBrokerServiceImpl messageBrokerService;
 
     @Autowired
     public GatewayServiceImpl(
         GatewayRepository gatewayRepository,
         UserRepository userRepository,
-        MessageBrokerService messageBrokerService
+        MessageBrokerServiceImpl messageBrokerService
     ) {
         this.gatewayRepository = gatewayRepository;
         this.userRepository = userRepository;
@@ -67,10 +67,8 @@ public class GatewayServiceImpl implements GatewayService {
             entity.setQueueInName(prefix + "_in");
             entity.setQueueOutName(prefix + "_out");
             gatewayRepository.save(entity);
-
-            messageBrokerService.createQueue(entity.getQueueInName());
-            messageBrokerService.createQueue(entity.getQueueOutName());
         }
+        messageBrokerService.createQueues(entity);
         return new GatewayQueueInfo(entity.getQueueInName(), entity.getQueueOutName());
     }
 
