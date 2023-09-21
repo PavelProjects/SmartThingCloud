@@ -32,10 +32,10 @@ public class GatewayEntity {
     private String description;
 
     @Column(name = "queue_in_name")
-    private String queueInName;
+    private String queueIn;
 
     @Column(name = "queue_out_name")
-    private String queueOutName;
+    private String queueOut;
 
     @Column(name = "creation_date")
     private LocalDateTime creationDate;

@@ -1,7 +1,9 @@
 package ru.pobopo.smartthing.cloud.controller;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeoutException;
 import javax.naming.AuthenticationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,7 +24,7 @@ import ru.pobopo.smartthing.cloud.service.TokenService;
 import ru.pobopo.smartthing.cloud.service.impl.AuthoritiesService;
 
 @RestController
-@RequestMapping("/management/gateway")
+@RequestMapping("/gateway/management")
 public class GatewayManagementController {
     private final GatewayService gatewayService;
     private final GatewayMapper gatewayMapper;
@@ -48,7 +50,8 @@ public class GatewayManagementController {
     }
 
     @PostMapping("/create")
-    public GatewayDto createGateway(@RequestBody CreateGatewayRequest request) throws AuthenticationException, ValidationException {
+    public GatewayDto createGateway(@RequestBody CreateGatewayRequest request)
+        throws AuthenticationException, ValidationException, IOException, TimeoutException {
         GatewayEntity gatewayEntity = gatewayService.createGateway(request.getName(), request.getDescription());
         Objects.requireNonNull(gatewayEntity);
         return gatewayMapper.toDto(gatewayEntity);

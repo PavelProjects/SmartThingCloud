@@ -10,8 +10,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import ru.pobopo.smartthing.cloud.context.ContextHolder;
-import ru.pobopo.smartthing.cloud.dto.GatewayQueueInfo;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
@@ -22,23 +20,23 @@ import ru.pobopo.smartthing.cloud.service.GatewayService;
 public class GatewayServiceImpl implements GatewayService {
     private final GatewayRepository gatewayRepository;
     private final UserRepository userRepository;
-    private final MessageBrokerServiceImpl messageBrokerService;
+    private final GatewayMessagingServiceImpl messagingService;
 
     @Autowired
     public GatewayServiceImpl(
         GatewayRepository gatewayRepository,
         UserRepository userRepository,
-        MessageBrokerServiceImpl messageBrokerService
+        GatewayMessagingServiceImpl messagingService
     ) {
         this.gatewayRepository = gatewayRepository;
         this.userRepository = userRepository;
-        this.messageBrokerService = messageBrokerService;
+        this.messagingService = messagingService;
     }
 
     @Override
     @Transactional
     public GatewayEntity createGateway(String name, String description)
-        throws AuthenticationException, ValidationException {
+        throws AuthenticationException, ValidationException, IOException, TimeoutException {
         if (StringUtils.isBlank(name)) {
             throw new ValidationException("Gateway name can't be empty!");
         }
@@ -53,23 +51,15 @@ public class GatewayServiceImpl implements GatewayService {
         gatewayEntity.setCreationDate(LocalDateTime.now());
 
         gatewayRepository.save(gatewayEntity);
-        return gatewayEntity;
-    }
 
-    @Override
-    public GatewayQueueInfo getQueueInfo() throws ValidationException, IOException, TimeoutException {
-        GatewayEntity entity = ContextHolder.getCurrentGateway();
-        if (entity == null) {
-            throw new ValidationException("No gateway! Wrong token?");
-        }
-        if (StringUtils.isBlank(entity.getQueueInName()) || StringUtils.isBlank(entity.getQueueOutName())) {
-            String prefix = entity.getId() + "_" + entity.getName();
-            entity.setQueueInName(prefix + "_in");
-            entity.setQueueOutName(prefix + "_out");
-            gatewayRepository.save(entity);
-        }
-        messageBrokerService.createQueues(entity);
-        return new GatewayQueueInfo(entity.getQueueInName(), entity.getQueueOutName());
+        String prefix = gatewayEntity.getId() + "_" + gatewayEntity.getName();
+        gatewayEntity.setQueueIn(prefix + "_in");
+        gatewayEntity.setQueueOut(prefix + "_out");
+        gatewayRepository.save(gatewayEntity);
+
+        messagingService.addResponseListener(gatewayEntity);
+
+        return gatewayEntity;
     }
 
     @Override

@@ -1,8 +1,6 @@
 package ru.pobopo.smartthing.cloud.controller;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,30 +10,26 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.pobopo.smartthing.cloud.context.ContextHolder;
 import ru.pobopo.smartthing.cloud.dto.GatewayDto;
-import ru.pobopo.smartthing.cloud.dto.GatewayQueueInfo;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
+import ru.pobopo.smartthing.cloud.exception.UnsupportedMessageClassException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.mapper.GatewayMapper;
-import ru.pobopo.smartthing.cloud.service.GatewayService;
-import ru.pobopo.smartthing.cloud.service.MessageBrokerService;
-import ru.pobopo.smartthing.cloud.service.model.GatewayCommand;
+import ru.pobopo.smartthing.cloud.service.RabbitMqService;
+import ru.pobopo.smartthing.cloud.rabbitmq.GatewayCommand;
 
 @RestController
 @RequestMapping("/gateway/me")
 public class GatewayController {
-    private final GatewayService gatewayService;
     private final GatewayMapper gatewayMapper;
-    private final MessageBrokerService messageBrokerService;
+    private final RabbitMqService rabbitMqService;
 
     @Autowired
     public GatewayController(
-        GatewayService gatewayService,
         GatewayMapper gatewayMapper,
-        MessageBrokerService messageBrokerService
+        RabbitMqService rabbitMqService
     ) {
-        this.gatewayService = gatewayService;
         this.gatewayMapper = gatewayMapper;
-        this.messageBrokerService = messageBrokerService;
+        this.rabbitMqService = rabbitMqService;
     }
 
     @GetMapping("/info")
@@ -47,15 +41,9 @@ public class GatewayController {
         return gatewayMapper.toDto(entity);
     }
 
-    @GetMapping("/queue")
-    public GatewayQueueInfo getQueue() throws ValidationException, IOException, TimeoutException {
-        return gatewayService.getQueueInfo();
-    }
-
     @PostMapping("/command")
-    public void sendCommand(@RequestBody GatewayCommand command) throws IOException, TimeoutException {
-        messageBrokerService.send(ContextHolder.getCurrentGateway(), command);
+    public void sendCommand(@RequestBody GatewayCommand command)
+        throws IOException, TimeoutException, ValidationException, UnsupportedMessageClassException {
+        rabbitMqService.send(ContextHolder.getCurrentGateway(), command);
     }
-
-
 }

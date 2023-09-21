@@ -60,4 +60,31 @@ create table smt_token_info (
     gateway_id char(8) references smt_gateway(id)
 );
 
+create table smt_gateway_request (
+    id char(8) primary key default getnextid(),
+    sent_date timestamp with time zone not null default now(),
+    receive_date timestamp with time zone,
+    user_id char(8) not null references smt_user(id),
+    gateway_id char(8) not null references smt_gateway(id),
+    message text,
+    result text,
+    finished boolean not null default false
+);
+
+create table smt_device_request_template (
+    id char(8) primary key default getnextid(),
+    path varchar(512),
+    method varchar(16),
+    payload varchar(4096),
+    supported_version varchar(32)
+);
+
+insert into smt_device_request_template values (
+    getnextid(),
+    '/info/system',
+    'GET',
+    null,
+    '0.4'
+);
+
 commit;

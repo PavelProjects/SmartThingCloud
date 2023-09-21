@@ -25,11 +25,11 @@ public class AuthoritiesService {
         return getCurrentUser().getName();
     }
 
-    public static boolean canManageGateway(UserDetails userDetails, GatewayEntity gatewayEntity) {
-        if (userDetails == null || gatewayEntity == null) {
+    public static boolean canManageGateway(GatewayEntity gatewayEntity) throws AuthenticationException {
+        if (gatewayEntity == null) {
             return false;
         }
-        return StringUtils.equals(userDetails.getUsername(), gatewayEntity.getOwner().getLogin());
+        return StringUtils.equals(getCurrentUserLogin(), gatewayEntity.getOwner().getLogin());
     }
 
     /**

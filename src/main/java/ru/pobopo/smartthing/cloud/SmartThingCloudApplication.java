@@ -5,6 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
+import ru.pobopo.smartthing.cloud.service.GatewayMessagingService;
 import ru.pobopo.smartthing.cloud.service.UserService;
 
 @SpringBootApplication
@@ -14,11 +15,13 @@ public class SmartThingCloudApplication {
     }
 
     @Bean
-    CommandLineRunner run(UserService userService) {
+    CommandLineRunner run(UserService userService, GatewayMessagingService gatewayMessagingService)  {
         return args -> {
             try {
                 userService.createUser("test_user", "1");
             } catch (ValidationException exception) {}
+
+            gatewayMessagingService.addResponseListeners();
         };
     }
 }
