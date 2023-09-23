@@ -13,7 +13,7 @@ import ru.pobopo.smartthing.cloud.rabbitmq.BaseMessage;
 @Component
 public interface GatewayMessagingService {
     List<RequestTemplateEntity> getRequestTemplates();
-    List<GatewayRequestEntity> getUserRequests() throws AuthenticationException;
+    List<GatewayRequestEntity> getUserRequests(int page, int size) throws AuthenticationException;
     GatewayRequestEntity getUserRequestById(String id) throws AuthenticationException;
 
     <T extends BaseMessage> GatewayRequestEntity sendMessage(String gatewayId, T message) throws Exception;

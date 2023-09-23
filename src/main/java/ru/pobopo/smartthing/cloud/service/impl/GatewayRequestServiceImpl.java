@@ -11,6 +11,8 @@ import javax.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.webjars.NotFoundException;
@@ -61,10 +63,10 @@ public class GatewayRequestServiceImpl implements GatewayMessagingService {
     }
 
     @Override
-    public List<GatewayRequestEntity> getUserRequests() throws AuthenticationException {
+    public List<GatewayRequestEntity> getUserRequests(int page, int size) throws AuthenticationException {
         UserEntity user = userRepository.findByLogin(AuthoritiesService.getCurrentUserLogin());
         Objects.requireNonNull(user, "Can't find user " + AuthoritiesService.getCurrentUserLogin());
-        return requestRepository.findByUser(user);
+        return requestRepository.findByUser(user, PageRequest.of(page, size, Sort.by("sentDate").descending()));
     }
 
     @Override
