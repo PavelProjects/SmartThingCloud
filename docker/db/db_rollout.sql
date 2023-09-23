@@ -68,7 +68,8 @@ create table smt_gateway_request (
     gateway_id char(8) not null references smt_gateway(id),
     message text,
     result text,
-    finished boolean not null default false
+    finished boolean not null default false,
+    success boolean
 );
 
 create table smt_device_request_template (

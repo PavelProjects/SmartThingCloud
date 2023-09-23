@@ -9,4 +9,5 @@ public class GatewayDto {
     private String description;
     private String queueIn;
     private String queueOut;
+    private boolean online;
 }

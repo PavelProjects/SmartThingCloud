@@ -6,7 +6,11 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import javax.annotation.PreDestroy;
@@ -17,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import ru.pobopo.smartthing.cloud.dto.GatewayDto;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.exception.UnsupportedMessageClassException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
@@ -70,7 +75,7 @@ public class RabbitMqServiceImpl implements RabbitMqService {
 
     @Override
     public <T extends BaseMessage> String send(GatewayEntity entity, T message)
-        throws IOException, TimeoutException, UnsupportedMessageClassException, ValidationException {
+        throws IOException, UnsupportedMessageClassException, ValidationException {
         Objects.requireNonNull(entity, "Gateway entity is missing!");
         String queue = entity.getQueueIn();
 
@@ -86,6 +91,31 @@ public class RabbitMqServiceImpl implements RabbitMqService {
         log.info("Sending to {} message {}", queue, message);
         channel.basicPublish("", queue, properties, messageStr.getBytes());
         return messageStr;
+    }
+
+    @Override
+    public boolean isOnline(GatewayDto gatewayDto) throws IOException {
+        return channel.consumerCount(gatewayDto.getQueueIn()) > 0;
+    }
+
+    @Override
+    public void checkIsOnline(List<GatewayDto> gateways) throws InterruptedException {
+        int size = gateways.size();
+        CountDownLatch latch = new CountDownLatch(size);
+        ExecutorService executorService = Executors.newFixedThreadPool(size);
+        gateways.forEach(entity ->
+            executorService.submit(() -> {
+                boolean online = false;
+                try {
+                    online = isOnline(entity);
+                } catch (IOException e) {
+                    log.error("Failed to check gateway {} availability: {}", entity, e.getMessage());
+                }
+                entity.setOnline(online);
+                latch.countDown();
+            })
+        );
+        latch.await();
     }
 
     @NonNull

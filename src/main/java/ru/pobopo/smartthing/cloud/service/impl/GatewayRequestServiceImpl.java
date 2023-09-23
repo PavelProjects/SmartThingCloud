@@ -7,7 +7,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import javax.naming.AuthenticationException;
+import javax.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +30,7 @@ import ru.pobopo.smartthing.cloud.rabbitmq.BaseMessage;
 
 @Component
 @Slf4j
-public class GatewayMessagingServiceImpl implements GatewayMessagingService {
+public class GatewayRequestServiceImpl implements GatewayMessagingService {
     private final RequestTemplateRepository requestTemplateRepository;
     private final GatewayRequestRepository requestRepository;
     private final UserRepository userRepository;
@@ -37,7 +39,7 @@ public class GatewayMessagingServiceImpl implements GatewayMessagingService {
     private final GatewayResponseProcessor responseProcessor;
 
     @Autowired
-    public GatewayMessagingServiceImpl(
+    public GatewayRequestServiceImpl(
         RequestTemplateRepository requestTemplateRepository,
         GatewayRequestRepository requestRepository,
         UserRepository userRepository,
@@ -65,6 +67,16 @@ public class GatewayMessagingServiceImpl implements GatewayMessagingService {
         return requestRepository.findByUser(user);
     }
 
+    @Override
+    public GatewayRequestEntity getUserRequestById(String id) throws AuthenticationException {
+        if (StringUtils.isBlank(id)) {
+            throw new ValidationException("Request id is missing!");
+        }
+
+        UserEntity user = userRepository.findByLogin(AuthoritiesService.getCurrentUserLogin());
+        Objects.requireNonNull(user, "Can't find user " + AuthoritiesService.getCurrentUserLogin());
+        return requestRepository.findByUserAndId(user, id);
+    }
 
     @Override
     public <T extends BaseMessage> GatewayRequestEntity sendMessage(String gatewayId, T message) throws Exception {

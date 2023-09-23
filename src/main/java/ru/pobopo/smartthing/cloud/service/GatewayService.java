@@ -14,7 +14,7 @@ public interface GatewayService {
     Optional<GatewayEntity> getGateway(String id);
 
     GatewayEntity findUserGateway(String name) throws AuthenticationException;
-    List<GatewayEntity> getUserGateways() throws AuthenticationException;
+    List<GatewayEntity> getUserGateways() throws AuthenticationException, InterruptedException;
     GatewayEntity createGateway(String name, String description)
         throws AuthenticationException, ValidationException, IOException, TimeoutException;
 }

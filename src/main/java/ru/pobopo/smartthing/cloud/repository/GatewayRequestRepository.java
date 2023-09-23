@@ -9,4 +9,5 @@ import ru.pobopo.smartthing.cloud.entity.UserEntity;
 @Repository
 public interface GatewayRequestRepository extends JpaRepository<GatewayRequestEntity, String> {
     List<GatewayRequestEntity> findByUser(UserEntity user);
+    GatewayRequestEntity findByUserAndId(UserEntity user, String id);
 }

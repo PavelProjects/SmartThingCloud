@@ -1,8 +1,10 @@
 package ru.pobopo.smartthing.cloud.service;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
+import ru.pobopo.smartthing.cloud.dto.GatewayDto;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.exception.UnsupportedMessageClassException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
@@ -13,5 +15,8 @@ public interface RabbitMqService {
     void createQueues(GatewayEntity entity) throws IOException, TimeoutException;
     void addQueueListener(GatewayEntity entity, Consumer<MessageResponse> consumer) throws IOException;
     <T extends BaseMessage> String send(GatewayEntity entity, T message)
-        throws IOException, TimeoutException, UnsupportedMessageClassException, ValidationException;
+        throws IOException, UnsupportedMessageClassException, ValidationException;
+
+    void checkIsOnline(List<GatewayDto> gatewayDtoList) throws InterruptedException;
+    boolean isOnline(GatewayDto dto) throws IOException;
 }

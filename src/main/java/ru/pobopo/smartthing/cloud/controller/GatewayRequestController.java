@@ -3,8 +3,10 @@ package ru.pobopo.smartthing.cloud.controller;
 import java.util.List;
 import java.util.Objects;
 import javax.naming.AuthenticationException;
+import javax.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,8 +18,6 @@ import ru.pobopo.smartthing.cloud.dto.RequestTemplateDto;
 import ru.pobopo.smartthing.cloud.entity.GatewayRequestEntity;
 import ru.pobopo.smartthing.cloud.mapper.GatewayRequestMapper;
 import ru.pobopo.smartthing.cloud.mapper.RequestTemplateMapper;
-import ru.pobopo.smartthing.cloud.rabbitmq.DeviceRequestMessage;
-import ru.pobopo.smartthing.cloud.rabbitmq.GatewayCommand;
 import ru.pobopo.smartthing.cloud.service.GatewayMessagingService;
 
 @RestController
@@ -45,9 +45,15 @@ public class GatewayRequestController {
     }
 
     //todo add pagination and order by sent date!!!
+    // and filtration by gateway, date, status and etc
     @GetMapping("/list")
     public List<GatewayRequestDto> getRequests() throws AuthenticationException {
         return gatewayRequestMapper.toDto(requestService.getUserRequests());
+    }
+
+    @GetMapping("/{id}")
+    public GatewayRequestDto getRequest(@PathVariable String id) throws AuthenticationException {
+        return gatewayRequestMapper.toDto(requestService.getUserRequestById(id));
     }
 
     @PostMapping("/command")

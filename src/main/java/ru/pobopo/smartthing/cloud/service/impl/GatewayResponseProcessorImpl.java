@@ -46,6 +46,7 @@ public class GatewayResponseProcessorImpl implements GatewayResponseProcessor {
 
         GatewayRequestEntity entity = requestEntity.get();
         entity.setResult(response.getResponse());
+        entity.setSuccess(response.isSuccess());
         entity.setFinished(true);
         entity.setReceiveDate(LocalDateTime.now());
         requestRepository.save(entity);

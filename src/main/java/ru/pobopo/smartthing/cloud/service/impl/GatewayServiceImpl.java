@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import javax.naming.AuthenticationException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -17,16 +18,17 @@ import ru.pobopo.smartthing.cloud.repository.UserRepository;
 import ru.pobopo.smartthing.cloud.service.GatewayService;
 
 @Component
+@Slf4j
 public class GatewayServiceImpl implements GatewayService {
     private final GatewayRepository gatewayRepository;
     private final UserRepository userRepository;
-    private final GatewayMessagingServiceImpl messagingService;
+    private final GatewayRequestServiceImpl messagingService;
 
     @Autowired
     public GatewayServiceImpl(
         GatewayRepository gatewayRepository,
         UserRepository userRepository,
-        GatewayMessagingServiceImpl messagingService
+        GatewayRequestServiceImpl messagingService
     ) {
         this.gatewayRepository = gatewayRepository;
         this.userRepository = userRepository;

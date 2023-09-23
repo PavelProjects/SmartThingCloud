@@ -46,4 +46,7 @@ public class GatewayRequestEntity {
 
     @Column
     private boolean finished = false;
+
+    @Column
+    private boolean success;
 }

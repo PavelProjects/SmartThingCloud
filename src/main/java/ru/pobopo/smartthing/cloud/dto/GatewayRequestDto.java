@@ -11,6 +11,7 @@ public class GatewayRequestDto {
     private String message;
     private String result;
     private boolean finished;
+    private boolean success;
     private GatewayDto gateway;
     private UserDto user;
 }
