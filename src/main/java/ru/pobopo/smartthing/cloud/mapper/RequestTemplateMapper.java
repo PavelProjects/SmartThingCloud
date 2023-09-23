@@ -9,4 +9,6 @@ import ru.pobopo.smartthing.cloud.entity.RequestTemplateEntity;
 public interface RequestTemplateMapper {
     RequestTemplateDto toDto(RequestTemplateEntity entity);
     List<RequestTemplateDto> toDto(List<RequestTemplateEntity> entity);
+
+    RequestTemplateEntity toEntity(RequestTemplateDto dto);
 }

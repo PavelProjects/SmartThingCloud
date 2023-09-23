@@ -16,11 +16,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.webjars.NotFoundException;
+import ru.pobopo.smartthing.cloud.dto.RequestTemplateDto;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.entity.GatewayRequestEntity;
 import ru.pobopo.smartthing.cloud.entity.RequestTemplateEntity;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
+import ru.pobopo.smartthing.cloud.mapper.RequestTemplateMapper;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.repository.RequestTemplateRepository;
 import ru.pobopo.smartthing.cloud.repository.GatewayRequestRepository;
@@ -33,7 +35,6 @@ import ru.pobopo.smartthing.cloud.rabbitmq.BaseMessage;
 @Component
 @Slf4j
 public class GatewayRequestServiceImpl implements GatewayMessagingService {
-    private final RequestTemplateRepository requestTemplateRepository;
     private final GatewayRequestRepository requestRepository;
     private final UserRepository userRepository;
     private final GatewayRepository gatewayRepository;
@@ -42,14 +43,12 @@ public class GatewayRequestServiceImpl implements GatewayMessagingService {
 
     @Autowired
     public GatewayRequestServiceImpl(
-        RequestTemplateRepository requestTemplateRepository,
         GatewayRequestRepository requestRepository,
         UserRepository userRepository,
         RabbitMqService rabbitMqService,
         GatewayRepository gatewayRepository,
         GatewayResponseProcessor responseProcessor
     ) {
-        this.requestTemplateRepository = requestTemplateRepository;
         this.requestRepository = requestRepository;
         this.userRepository = userRepository;
         this.rabbitMqService = rabbitMqService;
@@ -57,16 +56,10 @@ public class GatewayRequestServiceImpl implements GatewayMessagingService {
         this.responseProcessor = responseProcessor;
     }
 
-    @Override
-    public List<RequestTemplateEntity> getRequestTemplates() {
-        return requestTemplateRepository.findAll();
-    }
 
     @Override
     public List<GatewayRequestEntity> getUserRequests(int page, int size) throws AuthenticationException {
-        UserEntity user = userRepository.findByLogin(AuthoritiesService.getCurrentUserLogin());
-        Objects.requireNonNull(user, "Can't find user " + AuthoritiesService.getCurrentUserLogin());
-        return requestRepository.findByUser(user, PageRequest.of(page, size, Sort.by("sentDate").descending()));
+        return requestRepository.findByUser(getCurrentUser(), PageRequest.of(page, size, Sort.by("sentDate").descending()));
     }
 
     @Override
@@ -74,10 +67,7 @@ public class GatewayRequestServiceImpl implements GatewayMessagingService {
         if (StringUtils.isBlank(id)) {
             throw new ValidationException("Request id is missing!");
         }
-
-        UserEntity user = userRepository.findByLogin(AuthoritiesService.getCurrentUserLogin());
-        Objects.requireNonNull(user, "Can't find user " + AuthoritiesService.getCurrentUserLogin());
-        return requestRepository.findByUserAndId(user, id);
+        return requestRepository.findByUserAndId(getCurrentUser(), id);
     }
 
     @Override
@@ -99,9 +89,7 @@ public class GatewayRequestServiceImpl implements GatewayMessagingService {
             throw new AccessDeniedException("Current user can't send request to gateway " + gateway.getId());
         }
 
-        UserEntity user = userRepository.findByLogin(AuthoritiesService.getCurrentUserLogin());
-        Objects.requireNonNull(user, "Can't find user " + AuthoritiesService.getCurrentUserLogin());
-
+        UserEntity user = getCurrentUser();
         GatewayRequestEntity requestEntity = new GatewayRequestEntity();
         requestEntity.setFinished(false);
         requestEntity.setMessage(message.toString());
@@ -121,6 +109,10 @@ public class GatewayRequestServiceImpl implements GatewayMessagingService {
     @Override
     public void addResponseListeners() throws IOException, TimeoutException {
         List<GatewayEntity> entities = gatewayRepository.findAll();
+        if (entities.size() == 0) {
+            return;
+        }
+
         log.info("Adding response listeners for gateways. Total count: {}", entities.size());
         for (GatewayEntity entity: entities) {
             addResponseListener(entity);
@@ -134,5 +126,11 @@ public class GatewayRequestServiceImpl implements GatewayMessagingService {
 
         rabbitMqService.createQueues(entity);
         rabbitMqService.addQueueListener(entity, responseProcessor::process);
+    }
+
+    private UserEntity getCurrentUser() throws AuthenticationException {
+        UserEntity user = userRepository.findByLogin(AuthoritiesService.getCurrentUserLogin());
+        Objects.requireNonNull(user, "Can't find user " + AuthoritiesService.getCurrentUserLogin());
+        return user;
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
+import ru.pobopo.smartthing.cloud.entity.RequestTemplateEntity;
 
 @Service
 public class AuthoritiesService {
@@ -30,6 +31,13 @@ public class AuthoritiesService {
             return false;
         }
         return StringUtils.equals(getCurrentUserLogin(), gatewayEntity.getOwner().getLogin());
+    }
+
+    public static boolean canManageRequestTemplate(RequestTemplateEntity entity) throws AuthenticationException {
+        if (entity == null || entity.getOwner() == null) {
+            return false;
+        }
+        return StringUtils.equals(getCurrentUserLogin(), entity.getOwner().getLogin());
     }
 
     /**

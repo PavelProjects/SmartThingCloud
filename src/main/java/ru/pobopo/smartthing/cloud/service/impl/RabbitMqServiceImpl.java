@@ -101,6 +101,10 @@ public class RabbitMqServiceImpl implements RabbitMqService {
     @Override
     public void checkIsOnline(List<GatewayDto> gateways) throws InterruptedException {
         int size = gateways.size();
+        if (size < 1) {
+            return;
+        }
+
         CountDownLatch latch = new CountDownLatch(size);
         ExecutorService executorService = Executors.newFixedThreadPool(size);
         gateways.forEach(entity ->

@@ -74,16 +74,30 @@ create table smt_gateway_request (
 
 create table smt_device_request_template (
     id char(8) primary key default getnextid(),
+    name varchar(128),
     path varchar(512),
     method varchar(16),
     payload varchar(4096),
+    owner_id char(8) references smt_user(id),
     supported_version varchar(32)
 );
 
 insert into smt_device_request_template values (
     getnextid(),
+    'Get device system info',
     '/info/system',
     'GET',
+    null,
+    null,
+    '0.4'
+);
+
+insert into smt_device_request_template values (
+    getnextid(),
+    'Get device config info',
+    '/info/config',
+    'GET',
+    null,
     null,
     '0.4'
 );

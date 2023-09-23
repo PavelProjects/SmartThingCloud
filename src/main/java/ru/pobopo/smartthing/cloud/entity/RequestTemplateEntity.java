@@ -2,8 +2,11 @@ package ru.pobopo.smartthing.cloud.entity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import lombok.Data;
 import org.hibernate.annotations.GenericGenerator;
@@ -20,6 +23,9 @@ public class RequestTemplateEntity {
     @Column
     private String id;
 
+    @Column
+    private String name;
+
     @Column(nullable = false)
     private String path;
 
@@ -31,4 +37,8 @@ public class RequestTemplateEntity {
 
     @Column(name = "supported_version")
     private String supportedVersion;
+
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "owner_id", referencedColumnName = "id")
+    private UserEntity owner;
 }
