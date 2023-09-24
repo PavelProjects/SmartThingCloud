@@ -6,6 +6,10 @@ import ru.pobopo.smartthing.cloud.exception.ValidationException;
 
 @Component
 public interface UserService {
-    String createUser(String login, String password) throws ValidationException;
+    UserEntity createUser(String login, String password) throws ValidationException;
+
+    UserEntity getUserById(String id);
     UserEntity getUser(String login);
+
+    void grantUserRole(UserEntity user, String role) throws ValidationException;
 }

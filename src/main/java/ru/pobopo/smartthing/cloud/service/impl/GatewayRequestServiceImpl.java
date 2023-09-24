@@ -110,6 +110,7 @@ public class GatewayRequestServiceImpl implements GatewayMessagingService {
     public void addResponseListeners() throws IOException, TimeoutException {
         List<GatewayEntity> entities = gatewayRepository.findAll();
         if (entities.size() == 0) {
+            log.info("No gateways were found -> skipping response listeners creation");
             return;
         }
 

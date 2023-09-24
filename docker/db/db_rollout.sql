@@ -32,6 +32,14 @@ create table smt_user (
     creation_date timestamp with time zone not null default now()
 );
 
+create table smt_user_role (
+    id char(8) primary key default getnextid(),
+    creation_date timestamp with time zone not null default now(),
+    user_id char(8) not null references smt_user(id),
+    role varchar(32) not null,
+    unique(user_id, role)
+);
+
 create table smt_gateway (
     id char(8) primary key default getnextid(),
     creation_date timestamp with time zone not null default now(),
@@ -48,7 +56,6 @@ create table smt_gateway_owner (
     gateway_id char(8) not null references smt_gateway(id),
     unique(user_id, gateway_id)
 );
-
 
 create table smt_token_info (
     id char(8) primary key default getnextid(),

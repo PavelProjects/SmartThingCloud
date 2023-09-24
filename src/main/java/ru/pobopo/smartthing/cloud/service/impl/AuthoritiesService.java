@@ -1,6 +1,7 @@
 package ru.pobopo.smartthing.cloud.service.impl;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 import javax.naming.AuthenticationException;
 import javax.validation.constraints.NotNull;
@@ -15,6 +16,10 @@ import ru.pobopo.smartthing.cloud.entity.RequestTemplateEntity;
 
 @Service
 public class AuthoritiesService {
+    public static final String USER_ROLE = "user";
+    public static final String ADMIN_ROLE = "admin";
+    public static final String GATEWAY_ADMIN_ROLE = "gateway_admin";
+
     /**
      * Возвращает логин текущего авторизованного юзера
      * @return логин пользователя
@@ -26,36 +31,49 @@ public class AuthoritiesService {
         return getCurrentUser().getName();
     }
 
+    /**
+     * Проверяет, может ли текущий юзер как либо изменять/управлять маршрутизатором
+     * @param gatewayEntity маршртизатор, доступ к которому надо проверить
+     * @return true, если доступ есть, false в протимном случае
+     * @throws AuthenticationException выкидывается, если в контенксте нет авторизованного пользователя
+     */
     public static boolean canManageGateway(GatewayEntity gatewayEntity) throws AuthenticationException {
-        if (gatewayEntity == null) {
+        if (gatewayEntity == null || gatewayEntity.getOwner() == null) {
             return false;
         }
-        return StringUtils.equals(getCurrentUserLogin(), gatewayEntity.getOwner().getLogin());
+        Authentication authentication = getCurrentUser();
+        return checkAuthority(authentication, List.of(ADMIN_ROLE, GATEWAY_ADMIN_ROLE))
+               || isSameUser(authentication, gatewayEntity.getOwner().getLogin());
     }
 
+    /**
+     * Проверяет, может ли текущий юзер изменять шаблон запроса
+     * @param entity - шаблон запроса, доступ к которому надо проверить
+     * @return - true, если доступ есть
+     * @throws AuthenticationException выкидывается, если в контенксте нет авторизованного пользователя
+     */
     public static boolean canManageRequestTemplate(RequestTemplateEntity entity) throws AuthenticationException {
         if (entity == null || entity.getOwner() == null) {
             return false;
         }
-        return StringUtils.equals(getCurrentUserLogin(), entity.getOwner().getLogin());
+        Authentication authentication = getCurrentUser();
+        return checkAuthority(authentication, List.of(ADMIN_ROLE)) || isSameUser(authentication, entity.getOwner().getLogin());
     }
 
     /**
-     * Проверяет наличие прав у текущего юзера
-     * @param authorities - набор прав, которые должны быть у юзера для получения доступа
-     * @return
-     * @throws AuthenticationException
+     * Проверяет наличие прав у юзера
+     * @param authorities набор прав, которые должны быть у юзера для получения доступа
      */
-    public static boolean checkAuthority(Collection<String> authorities) throws AuthenticationException {
-        Collection<? extends GrantedAuthority> userAuthorities = getCurrentUser().getAuthorities();
+    private static boolean checkAuthority(Authentication authentication, Collection<String> authorities) {
+        Collection<? extends GrantedAuthority> userAuthorities = authentication.getAuthorities();
         if (userAuthorities == null || userAuthorities.isEmpty() || userAuthorities.size() < authorities.size()) {
             return false;
         }
         return authorities.containsAll(userAuthorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
     }
 
-    private static boolean isSameUser(String userLogin) throws AuthenticationException {
-        return StringUtils.equals(userLogin, getCurrentUser().getName());
+    private static boolean isSameUser(Authentication authentication, String userLogin) {
+        return StringUtils.equals(userLogin, authentication.getName());
     }
 
     private static Authentication getCurrentUser() throws AuthenticationException {
