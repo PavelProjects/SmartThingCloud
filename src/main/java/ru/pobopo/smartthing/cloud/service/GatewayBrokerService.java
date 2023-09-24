@@ -10,7 +10,7 @@ import ru.pobopo.smartthing.cloud.entity.GatewayRequestEntity;
 import ru.pobopo.smartthing.cloud.rabbitmq.BaseMessage;
 
 @Component
-public interface GatewayMessagingService {
+public interface GatewayBrokerService {
     List<GatewayRequestEntity> getUserRequests(int page, int size) throws AuthenticationException;
     GatewayRequestEntity getUserRequestById(String id) throws AuthenticationException;
 
@@ -18,5 +18,6 @@ public interface GatewayMessagingService {
     <T extends BaseMessage> GatewayRequestEntity sendMessage(GatewayEntity gateway, T message) throws Exception;
 
     void addResponseListeners() throws IOException, TimeoutException;
-    void addResponseListener(GatewayEntity entity) throws IOException, TimeoutException;
+    void addResponseListener(GatewayEntity entity) throws IOException;
+    void removeResponseListener(GatewayEntity entity) throws IOException;
 }

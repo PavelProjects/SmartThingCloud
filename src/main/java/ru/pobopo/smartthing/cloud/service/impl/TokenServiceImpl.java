@@ -117,9 +117,6 @@ public class TokenServiceImpl implements TokenService {
                 throw new AccessDeniedException("Gateway not found");
             }
             ContextHolder.setCurrentGateway(gateway.get());
-//            user.getAuthorities().add(new SimpleGrantedAuthority("GATEWAY"));
-        } else {
-//            user.getAuthorities().add(new SimpleGrantedAuthority("USER"));
         }
 
         return user;

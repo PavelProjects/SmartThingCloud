@@ -1,4 +1,4 @@
-package ru.pobopo.smartthing.cloud.config;
+package ru.pobopo.smartthing.cloud.rabbitmq;
 
 public class RabbitCreditsHolder {
     private final String login;

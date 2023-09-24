@@ -16,25 +16,21 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.webjars.NotFoundException;
-import ru.pobopo.smartthing.cloud.dto.RequestTemplateDto;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.entity.GatewayRequestEntity;
-import ru.pobopo.smartthing.cloud.entity.RequestTemplateEntity;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
-import ru.pobopo.smartthing.cloud.mapper.RequestTemplateMapper;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
-import ru.pobopo.smartthing.cloud.repository.RequestTemplateRepository;
 import ru.pobopo.smartthing.cloud.repository.GatewayRequestRepository;
 import ru.pobopo.smartthing.cloud.repository.UserRepository;
-import ru.pobopo.smartthing.cloud.service.GatewayMessagingService;
+import ru.pobopo.smartthing.cloud.service.GatewayBrokerService;
 import ru.pobopo.smartthing.cloud.service.GatewayResponseProcessor;
 import ru.pobopo.smartthing.cloud.service.RabbitMqService;
 import ru.pobopo.smartthing.cloud.rabbitmq.BaseMessage;
 
 @Component
 @Slf4j
-public class GatewayRequestServiceImpl implements GatewayMessagingService {
+public class GatewayBrokerServiceImpl implements GatewayBrokerService {
     private final GatewayRequestRepository requestRepository;
     private final UserRepository userRepository;
     private final GatewayRepository gatewayRepository;
@@ -42,7 +38,7 @@ public class GatewayRequestServiceImpl implements GatewayMessagingService {
     private final GatewayResponseProcessor responseProcessor;
 
     @Autowired
-    public GatewayRequestServiceImpl(
+    public GatewayBrokerServiceImpl(
         GatewayRequestRepository requestRepository,
         UserRepository userRepository,
         RabbitMqService rabbitMqService,
@@ -122,11 +118,17 @@ public class GatewayRequestServiceImpl implements GatewayMessagingService {
     }
 
     @Override
-    public void addResponseListener(GatewayEntity entity) throws IOException, TimeoutException {
+    public void addResponseListener(GatewayEntity entity) throws IOException {
         Objects.requireNonNull(entity);
 
         rabbitMqService.createQueues(entity);
         rabbitMqService.addQueueListener(entity, responseProcessor::process);
+    }
+
+    @Override
+    public void removeResponseListener(GatewayEntity entity) throws IOException {
+        rabbitMqService.removeQueueListener(entity);
+        rabbitMqService.deleteQueues(entity);
     }
 
     private UserEntity getCurrentUser() throws AuthenticationException {

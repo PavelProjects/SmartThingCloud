@@ -58,9 +58,15 @@ public class RabbitMqServiceImpl implements RabbitMqService {
     }
 
     @Override
-    public void createQueues(GatewayEntity entity) throws IOException, TimeoutException {
+    public void createQueues(GatewayEntity entity) throws IOException {
         channel.queueDeclare(entity.getQueueIn(), false, false, false, null);
         channel.queueDeclare(entity.getQueueOut(), false, false, false, null);
+    }
+
+    @Override
+    public void deleteQueues(GatewayEntity entity) throws IOException {
+        channel.queueDelete(entity.getQueueIn());
+        channel.queueDelete(entity.getQueueOut());
     }
 
     @Override
@@ -68,9 +74,14 @@ public class RabbitMqServiceImpl implements RabbitMqService {
         channel.basicConsume(
             entity.getQueueOut(),
             false,
-            "consumer_" + entity.getId(),
+            buildConsumerTag(entity),
             new MessageConsumer(channel, consumer)
         );
+    }
+
+    @Override
+    public void removeQueueListener(GatewayEntity entity) throws IOException {
+        channel.basicCancel(buildConsumerTag(entity));
     }
 
     @Override
@@ -133,5 +144,9 @@ public class RabbitMqServiceImpl implements RabbitMqService {
         }
 
         throw new UnsupportedMessageClassException(message.getClass());
+    }
+
+    private static String buildConsumerTag(GatewayEntity entity) {
+        return "consumer_" + entity.getId();
     }
 }

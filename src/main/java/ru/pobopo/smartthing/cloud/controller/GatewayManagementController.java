@@ -10,7 +10,9 @@ import java.util.concurrent.TimeoutException;
 import javax.naming.AuthenticationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,6 +23,7 @@ import ru.pobopo.smartthing.cloud.controller.model.GenerateTokenRequest;
 import ru.pobopo.smartthing.cloud.controller.model.TokenResponse;
 import ru.pobopo.smartthing.cloud.dto.GatewayDto;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
+import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.mapper.GatewayMapper;
 import ru.pobopo.smartthing.cloud.service.GatewayService;
@@ -65,11 +68,34 @@ public class GatewayManagementController {
         return gatewayMapper.toDto(gatewayEntity);
     }
 
+    @PutMapping("/update")
+    public void updateGateway(@RequestBody GatewayDto dto)
+        throws AccessDeniedException, ValidationException, AuthenticationException {
+        gatewayService.updateGateway(dto);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public void deleteGateway(@PathVariable String id)
+        throws AccessDeniedException, ValidationException, AuthenticationException, IOException {
+        gatewayService.deleteGateway(id);
+    }
+
+
     @GetMapping("/list")
     public List<GatewayDto> getList() throws AuthenticationException, InterruptedException {
         List<GatewayEntity> gateways = gatewayService.getUserGateways();
         List<GatewayDto> dtos = gatewayMapper.toDto(gateways);
         rabbitMqService.checkIsOnline(dtos);
         return dtos;
+    }
+
+    @GetMapping("/{id}")
+    public GatewayDto getById(@PathVariable String id) throws IOException {
+        GatewayDto dto = gatewayMapper.toDto(gatewayService.getGateway(id));
+        if (dto == null) {
+            return null;
+        }
+        dto.setOnline(rabbitMqService.isOnline(dto));
+        return dto;
     }
 }

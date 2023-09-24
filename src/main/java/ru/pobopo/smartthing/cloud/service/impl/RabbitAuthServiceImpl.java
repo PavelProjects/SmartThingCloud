@@ -1,12 +1,11 @@
 package ru.pobopo.smartthing.cloud.service.impl;
 
-import com.google.common.cache.CacheLoader;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ru.pobopo.smartthing.cloud.config.RabbitCreditsHolder;
+import ru.pobopo.smartthing.cloud.rabbitmq.RabbitCreditsHolder;
 import ru.pobopo.smartthing.cloud.context.ContextHolder;
 import ru.pobopo.smartthing.cloud.controller.model.rabbitmq.BasicCheck;
 import ru.pobopo.smartthing.cloud.controller.model.rabbitmq.ResourceCheck;

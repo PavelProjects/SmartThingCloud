@@ -11,4 +11,6 @@ public interface TokenInfoRepository extends JpaRepository<TokenInfoEntity, Stri
     TokenInfoEntity findByIdAndType(String id, String type);
     TokenInfoEntity findByActiveAndOwnerAndGatewayIsNull(boolean active, UserEntity owner);
     TokenInfoEntity findByActiveAndGateway(boolean active, GatewayEntity gatewayEntity);
+
+    long deleteByGateway(GatewayEntity gateway);
 }
