@@ -2,7 +2,10 @@ package ru.pobopo.smartthing.cloud.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import javax.naming.AuthenticationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,13 +30,13 @@ import ru.pobopo.smartthing.cloud.service.TokenService;
 @Service
 @Slf4j
 public class TokenServiceImpl implements TokenService {
+
     private static final String TYPE_CLAIM = "type_id";
     private static final String OWNER_CLAIM = "owner_login";
     private static final String GATEWAY_CLAIM = "gateway_id";
 
     private final TokenInfoRepository tokenRepository;
     private final UserDetailsService userDetailsService;
-    private final UserRepository userRepository;
     private final GatewayRepository gatewayRepository;
     private final JwtTokenUtil jwtTokenUtil;
 
@@ -41,21 +44,18 @@ public class TokenServiceImpl implements TokenService {
     public TokenServiceImpl(
         TokenInfoRepository tokenRepository,
         UserDetailsService userDetailsService,
-        UserRepository userRepository,
         GatewayRepository gatewayRepository,
         JwtTokenUtil jwtTokenUtil
     ) {
         this.tokenRepository = tokenRepository;
         this.userDetailsService = userDetailsService;
-        this.userRepository = userRepository;
         this.gatewayRepository = gatewayRepository;
         this.jwtTokenUtil = jwtTokenUtil;
     }
 
     @Override
     @Transactional
-    public String generateToken(String login) throws ValidationException {
-        UserEntity user = getUserAndValidate(login);
+    public String generateToken(UserEntity user) throws AuthenticationException, AccessDeniedException {
         deactivateOldToken(user);
 
         TokenInfoEntity tokenInfoEntity = buildDefaultToken(user);
@@ -67,20 +67,12 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     @Transactional
-    public String generateToken(String login, String gatewayId) throws ValidationException {
-        if (StringUtils.isBlank(gatewayId)) {
-            throw new ValidationException("Token id is missing!");
-        }
-
-        UserEntity user = getUserAndValidate(login);
+    public String generateToken(UserEntity user, GatewayEntity gatewayEntity)
+        throws AuthenticationException, AccessDeniedException {
         TokenInfoEntity tokenInfoEntity = buildDefaultToken(user);
-        Optional<GatewayEntity> gatewayEntity = gatewayRepository.findById(gatewayId);
-        if (gatewayEntity.isEmpty()) {
-            throw new ValidationException("Gateway not found!");
-        }
-        deactivateOldToken(gatewayEntity.get());
+        deactivateOldToken(gatewayEntity);
 
-        tokenInfoEntity.setGateway(gatewayEntity.get());
+        tokenInfoEntity.setGateway(gatewayEntity);
         tokenInfoEntity.setType(TokenType.GATEWAY.getName());
 
         tokenRepository.save(tokenInfoEntity);
@@ -89,17 +81,22 @@ public class TokenServiceImpl implements TokenService {
 
     //todo add cache
     @Override
-    public UserDetails validateToken(String token) throws AccessDeniedException {
+    public UserDetails validateToken(String token) throws AccessDeniedException, AuthenticationException {
         if (StringUtils.isBlank(token)) {
             throw new AccessDeniedException("Token is missing!");
         }
 
-        String tokenId = jwtTokenUtil.getTokenSubject(token);
-        String type = jwtTokenUtil.getClaimFromToken(token, claims -> (String) claims.get(TYPE_CLAIM));
+        TokenType tokenType = TokenType.fromString(
+            jwtTokenUtil.getClaimFromToken(token, claims -> (String) claims.get(TYPE_CLAIM))
+        );
+        if (tokenType == null) {
+            throw new AccessDeniedException("Unknown token type!");
+        }
 
-        TokenInfoEntity tokenInfoEntity = tokenRepository.findByIdAndType(tokenId, type);
+        String tokenId = jwtTokenUtil.getTokenSubject(token);
+        TokenInfoEntity tokenInfoEntity = tokenRepository.findByIdAndType(tokenId, tokenType.getName());
         if (tokenInfoEntity == null || !tokenInfoEntity.isActive()) {
-            throw new AccessDeniedException("Bad token");
+            throw new AccessDeniedException("Unknown token");
         }
 
         if (jwtTokenUtil.isTokenExpired(token)) {
@@ -110,7 +107,7 @@ public class TokenServiceImpl implements TokenService {
         String ownerLogin = jwtTokenUtil.getClaimFromToken(token, claims -> (String) claims.get(OWNER_CLAIM));
         UserDetails user = userDetailsService.loadUserByUsername(ownerLogin);
 
-        if (StringUtils.equals(type, TokenType.GATEWAY.getName())) {
+        if (TokenType.GATEWAY.equals(tokenType)) {
             String gatewayId = jwtTokenUtil.getClaimFromToken(token, claims -> (String) claims.get(GATEWAY_CLAIM));
             Optional<GatewayEntity> gateway = gatewayRepository.findById(gatewayId);
             if (gateway.isEmpty()) {
@@ -119,24 +116,28 @@ public class TokenServiceImpl implements TokenService {
             ContextHolder.setCurrentGateway(gateway.get());
         }
 
+        ContextHolder.setTokenType(tokenType);
+        ContextHolder.setTokenId(tokenId);
+
         return user;
     }
 
     @Override
-    public void deactivateToken(String token) {
-        if (StringUtils.isBlank(token)) {
-            return;
-        }
-
-        String tokenId = jwtTokenUtil.getTokenSubject(token);
+    public void deactivateToken(String tokenId) throws AccessDeniedException, AuthenticationException {
         if (StringUtils.isBlank(tokenId)) {
             return;
         }
+
         Optional<TokenInfoEntity> tokenInfoEntity = tokenRepository.findById(tokenId);
         if (tokenInfoEntity.isEmpty()) {
-            return;
+            throw new AccessDeniedException("Unknown token");
         }
         deactivateToken(tokenInfoEntity.get());
+    }
+
+    @Override
+    public List<TokenInfoEntity> getActiveGatewayTokens(UserEntity owner) {
+        return tokenRepository.findByActiveAndOwnerAndGatewayIsNotNull(true, owner);
     }
 
     private String generateToken(TokenInfoEntity tokenInfoEntity) {
@@ -149,34 +150,27 @@ public class TokenServiceImpl implements TokenService {
         return jwtTokenUtil.doGenerateToken(claims, tokenInfoEntity.getId());
     }
 
-    private void deactivateOldToken(UserEntity user) {
+    private void deactivateOldToken(UserEntity user) throws AuthenticationException, AccessDeniedException {
         deactivateToken(tokenRepository.findByActiveAndOwnerAndGatewayIsNull(true, user));
     }
 
-    private void deactivateOldToken(GatewayEntity gateway) {
+    private void deactivateOldToken(GatewayEntity gateway) throws AuthenticationException, AccessDeniedException {
         deactivateToken(tokenRepository.findByActiveAndGateway(true, gateway));
     }
 
-    private void deactivateToken(TokenInfoEntity oldToken) {
+    private void deactivateToken(TokenInfoEntity oldToken) throws AuthenticationException, AccessDeniedException {
         if (oldToken == null) {
             return;
+        }
+
+        if (oldToken.getGateway() != null && !AuthoritiesUtil.canManageToken(oldToken)) {
+            throw new AccessDeniedException("You are not the owner!");
         }
 
         oldToken.setActive(false);
         oldToken.setDeactivationDate(LocalDateTime.now());
         tokenRepository.save(oldToken);
-        log.warn("Token {} was deactivated", oldToken);
-    }
-
-    private UserEntity getUserAndValidate(String login) throws ValidationException {
-        if (StringUtils.isBlank(login)) {
-            throw new ValidationException("User id is missing!");
-        }
-        UserEntity user = userRepository.findByLogin(login);
-        if (user == null) {
-            throw new ValidationException("User not found!");
-        }
-        return user;
+        log.warn("Token {} was deactivated by {}", oldToken, AuthoritiesUtil.getCurrentUserLogin());
     }
 
     private TokenInfoEntity buildDefaultToken(UserEntity owner) {

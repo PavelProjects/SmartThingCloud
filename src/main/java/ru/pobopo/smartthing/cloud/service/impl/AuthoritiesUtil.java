@@ -9,13 +9,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.entity.RequestTemplateEntity;
+import ru.pobopo.smartthing.cloud.entity.TokenInfoEntity;
 
 @Service
-public class AuthoritiesService {
+public class AuthoritiesUtil {
     public static final String USER_ROLE = "user";
     public static final String ADMIN_ROLE = "admin";
     public static final String GATEWAY_ADMIN_ROLE = "gateway_admin";
@@ -29,6 +29,15 @@ public class AuthoritiesService {
     @NotNull
     public static String getCurrentUserLogin() throws AuthenticationException {
         return getCurrentUser().getName();
+    }
+
+    public static boolean canManageToken(TokenInfoEntity entity) throws AuthenticationException {
+        if (entity == null || entity.getOwner() == null) {
+            return false;
+        }
+
+        Authentication authentication = getCurrentUser();
+        return checkAuthority(authentication, List.of(ADMIN_ROLE)) || isSameUser(authentication, entity.getOwner().getLogin());
     }
 
     /**

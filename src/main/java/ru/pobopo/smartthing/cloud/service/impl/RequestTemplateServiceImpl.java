@@ -95,15 +95,15 @@ public class RequestTemplateServiceImpl implements RequestTemplateService {
             throw new NotFoundException("There is no request template with id " + id);
         }
 
-        if (!AuthoritiesService.canManageRequestTemplate(entity.get())) {
+        if (!AuthoritiesUtil.canManageRequestTemplate(entity.get())) {
             throw new AccessDeniedException("Current user can't manage this template!");
         }
         return entity.get();
     }
 
     private UserEntity getCurrentUser() throws AuthenticationException {
-        UserEntity user = userRepository.findByLogin(AuthoritiesService.getCurrentUserLogin());
-        Objects.requireNonNull(user, "Can't find user " + AuthoritiesService.getCurrentUserLogin());
+        UserEntity user = userRepository.findByLogin(AuthoritiesUtil.getCurrentUserLogin());
+        Objects.requireNonNull(user, "Can't find user " + AuthoritiesUtil.getCurrentUserLogin());
         return user;
     }
 }

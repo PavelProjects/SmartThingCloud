@@ -12,6 +12,6 @@ public class GatewayRequestDto {
     private String result;
     private boolean finished;
     private boolean success;
-    private GatewayDto gateway;
+    private GatewayShortDto gateway;
     private UserDto user;
 }

@@ -1,5 +1,6 @@
 package ru.pobopo.smartthing.cloud.repository;
 
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
@@ -13,4 +14,6 @@ public interface TokenInfoRepository extends JpaRepository<TokenInfoEntity, Stri
     TokenInfoEntity findByActiveAndGateway(boolean active, GatewayEntity gatewayEntity);
 
     long deleteByGateway(GatewayEntity gateway);
+
+    List<TokenInfoEntity> findByActiveAndOwnerAndGatewayIsNotNull(boolean active, UserEntity user);
 }

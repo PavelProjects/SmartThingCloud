@@ -81,7 +81,7 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
         Objects.requireNonNull(gateway, "Gateway entity is missing!");
         Objects.requireNonNull(message, "Message object is missing");
 
-        if (!AuthoritiesService.canManageGateway(gateway)) {
+        if (!AuthoritiesUtil.canManageGateway(gateway)) {
             throw new AccessDeniedException("Current user can't send request to gateway " + gateway.getId());
         }
 
@@ -132,8 +132,8 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
     }
 
     private UserEntity getCurrentUser() throws AuthenticationException {
-        UserEntity user = userRepository.findByLogin(AuthoritiesService.getCurrentUserLogin());
-        Objects.requireNonNull(user, "Can't find user " + AuthoritiesService.getCurrentUserLogin());
+        UserEntity user = userRepository.findByLogin(AuthoritiesUtil.getCurrentUserLogin());
+        Objects.requireNonNull(user, "Can't find user " + AuthoritiesUtil.getCurrentUserLogin());
         return user;
     }
 }

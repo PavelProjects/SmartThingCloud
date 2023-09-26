@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import ru.pobopo.smartthing.cloud.jwt.TokenType;
 import ru.pobopo.smartthing.cloud.rabbitmq.RabbitCreditsHolder;
 import ru.pobopo.smartthing.cloud.context.ContextHolder;
 import ru.pobopo.smartthing.cloud.controller.model.rabbitmq.BasicCheck;
@@ -44,6 +45,10 @@ public class RabbitAuthServiceImpl implements RabbitAuthService {
         if (isAdmin(username)) {
             return StringUtils.equals(creditsHolder.getPassword(), password) ? ALLOW : DENY;
         }
+        if (!TokenType.GATEWAY.equals(ContextHolder.getTokenType())) {
+            log.error("Wrong token type!");
+            return DENY;
+        }
         try {
             tokenService.validateToken(password);
             GatewayEntity gateway = ContextHolder.getCurrentGateway();
@@ -63,6 +68,10 @@ public class RabbitAuthServiceImpl implements RabbitAuthService {
         if (isAdmin(check.getUsername())) {
             return ALLOW;
         }
+        if (!TokenType.GATEWAY.equals(ContextHolder.getTokenType())) {
+            log.error("Wrong token type!");
+            return DENY;
+        }
         Optional<GatewayEntity> gateway = gatewayRepository.findById(check.getUsername());
         return gateway.isPresent() ? ALLOW : DENY;
     }
@@ -71,6 +80,10 @@ public class RabbitAuthServiceImpl implements RabbitAuthService {
     public String authResource(ResourceCheck check) {
         if (isAdmin(check.getUsername())) {
             return ALLOW;
+        }
+        if (!TokenType.GATEWAY.equals(ContextHolder.getTokenType())) {
+            log.error("Wrong token type!");
+            return DENY;
         }
         Optional<GatewayEntity> gateway = gatewayRepository.findById(check.getUsername());
         // todo resource=exchange, name=amq.default, permission=write -> allow
@@ -82,6 +95,10 @@ public class RabbitAuthServiceImpl implements RabbitAuthService {
     public String authTopic(TopicCheck check) {
         if (isAdmin(check.getUsername())) {
             return ALLOW;
+        }
+        if (!TokenType.GATEWAY.equals(ContextHolder.getTokenType())) {
+            log.error("Wrong token type!");
+            return DENY;
         }
         Optional<GatewayEntity> gateway = gatewayRepository.findById(check.getUsername());
         return gateway.isPresent() ? ALLOW : DENY;

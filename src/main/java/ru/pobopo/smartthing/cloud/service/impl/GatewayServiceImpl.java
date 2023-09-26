@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.webjars.NotFoundException;
-import ru.pobopo.smartthing.cloud.dto.GatewayDto;
+import ru.pobopo.smartthing.cloud.dto.GatewayShortDto;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
@@ -54,7 +54,7 @@ public class GatewayServiceImpl implements GatewayService {
         validateName(name);
 
         GatewayEntity gatewayEntity = new GatewayEntity();
-        gatewayEntity.setOwner(userRepository.findByLogin(AuthoritiesService.getCurrentUserLogin()));
+        gatewayEntity.setOwner(userRepository.findByLogin(AuthoritiesUtil.getCurrentUserLogin()));
         gatewayEntity.setName(name);
         gatewayEntity.setDescription(description);
         gatewayEntity.setCreationDate(LocalDateTime.now());
@@ -72,18 +72,18 @@ public class GatewayServiceImpl implements GatewayService {
     }
 
     @Override
-    public void updateGateway(GatewayDto gatewayDto)
+    public void updateGateway(GatewayShortDto gatewayShortDto)
         throws ValidationException, AuthenticationException, AccessDeniedException {
-        if (gatewayDto == null) {
+        if (gatewayShortDto == null) {
             throw new ValidationException("Dto is null!");
         }
 
-        GatewayEntity entity = getGatewayWithValidation(gatewayDto.getId());
+        GatewayEntity entity = getGatewayWithValidation(gatewayShortDto.getId());
 
-        validateName(gatewayDto.getName());
+        validateName(gatewayShortDto.getName());
 
-        entity.setName(gatewayDto.getName());
-        entity.setDescription(gatewayDto.getDescription());
+        entity.setName(gatewayShortDto.getName());
+        entity.setDescription(gatewayShortDto.getDescription());
         gatewayRepository.save(entity);
     }
 
@@ -107,12 +107,12 @@ public class GatewayServiceImpl implements GatewayService {
 
     @Override
     public List<GatewayEntity> getUserGateways() throws AuthenticationException {
-        return gatewayRepository.findByOwnerLogin(AuthoritiesService.getCurrentUserLogin());
+        return gatewayRepository.findByOwnerLogin(AuthoritiesUtil.getCurrentUserLogin());
     }
 
     @Override
     public GatewayEntity getUserGatewayByName(String name) throws AuthenticationException {
-        return gatewayRepository.findByNameAndOwnerLogin(name, AuthoritiesService.getCurrentUserLogin());
+        return gatewayRepository.findByNameAndOwnerLogin(name, AuthoritiesUtil.getCurrentUserLogin());
     }
 
     @Override
@@ -132,7 +132,7 @@ public class GatewayServiceImpl implements GatewayService {
             throw new NotFoundException("Gateway with id " + id + " not found!");
         }
 
-        if (!AuthoritiesService.canManageGateway(gatewayOptional.get())) {
+        if (!AuthoritiesUtil.canManageGateway(gatewayOptional.get())) {
             throw new AccessDeniedException("Current user can't manage gateway " + id);
         }
         return gatewayOptional.get();

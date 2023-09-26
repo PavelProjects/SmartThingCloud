@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 import javax.naming.AuthenticationException;
 import org.springframework.stereotype.Component;
-import ru.pobopo.smartthing.cloud.dto.GatewayDto;
+import ru.pobopo.smartthing.cloud.dto.GatewayShortDto;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
@@ -19,7 +19,7 @@ public interface GatewayService {
 
     GatewayEntity createGateway(String name, String description)
         throws AuthenticationException, ValidationException, IOException, TimeoutException;
-    void updateGateway(GatewayDto gatewayDto) throws ValidationException, AuthenticationException, AccessDeniedException;
+    void updateGateway(GatewayShortDto gatewayShortDto) throws ValidationException, AuthenticationException, AccessDeniedException;
     void deleteGateway(String id)
         throws AccessDeniedException, ValidationException, AuthenticationException, IOException;
 }
