@@ -13,5 +13,7 @@ public interface GatewayRequestRepository extends JpaRepository<GatewayRequestEn
     List<GatewayRequestEntity> findByUser(UserEntity user, Pageable pageable);
     GatewayRequestEntity findByUserAndId(UserEntity user, String id);
 
+    long countByFinishedAndTarget(boolean finished, String target);
+
     long deleteByGateway(GatewayEntity gateway);
 }

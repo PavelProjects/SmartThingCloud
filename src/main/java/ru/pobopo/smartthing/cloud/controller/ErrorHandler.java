@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.pobopo.smartthing.cloud.controller.model.ErrorResponse;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
+import ru.pobopo.smartthing.cloud.exception.BrokerException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 
 @Slf4j
@@ -72,5 +73,12 @@ public class ErrorHandler {
     public ErrorResponse ioException(IOException exc) {
         log.warn(exc.getMessage());
         return new ErrorResponse(exc.getMessage(), exc);
+    }
+
+    @ExceptionHandler(BrokerException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse brokerException(BrokerException exception) {
+        log.warn(exception.getMessage());
+        return new ErrorResponse(exception.getMessage());
     }
 }

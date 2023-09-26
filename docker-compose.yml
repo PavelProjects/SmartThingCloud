@@ -47,6 +47,7 @@ services:
       BROKER_HOST: rabbitmq
       BROKER_USER: ${BROKER_USER}
       BROKER_PASSWORD: ${BROKER_PASSWORD}
+      REQUESTS_LIMIT: 10
   rabbitmq:
     container_name: rabbitmq
     build:

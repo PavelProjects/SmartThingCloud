@@ -11,6 +11,8 @@ import ru.pobopo.smartthing.cloud.service.impl.AuthoritiesUtil;
 
 @SpringBootApplication
 public class SmartThingCloudApplication {
+    public static final String VERSION = "1.0";
+
     public static void main(String[] args) {
         SpringApplication.run(SmartThingCloudApplication.class, args);
     }

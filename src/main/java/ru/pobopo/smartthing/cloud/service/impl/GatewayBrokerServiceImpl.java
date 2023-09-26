@@ -11,6 +11,8 @@ import javax.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.data.domain.Example;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
@@ -20,6 +22,8 @@ import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.entity.GatewayRequestEntity;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
+import ru.pobopo.smartthing.cloud.exception.BrokerException;
+import ru.pobopo.smartthing.cloud.rabbitmq.DeviceRequestMessage;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.repository.GatewayRequestRepository;
 import ru.pobopo.smartthing.cloud.repository.UserRepository;
@@ -31,6 +35,8 @@ import ru.pobopo.smartthing.cloud.rabbitmq.BaseMessage;
 @Component
 @Slf4j
 public class GatewayBrokerServiceImpl implements GatewayBrokerService {
+
+    private final int requestsLimit;
     private final GatewayRequestRepository requestRepository;
     private final UserRepository userRepository;
     private final GatewayRepository gatewayRepository;
@@ -39,6 +45,7 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
 
     @Autowired
     public GatewayBrokerServiceImpl(
+        Environment environment,
         GatewayRequestRepository requestRepository,
         UserRepository userRepository,
         RabbitMqService rabbitMqService,
@@ -50,6 +57,9 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
         this.rabbitMqService = rabbitMqService;
         this.gatewayRepository = gatewayRepository;
         this.responseProcessor = responseProcessor;
+        this.requestsLimit = Integer.parseInt(environment.getProperty("REQUESTS_LIMIT", "10"));
+
+        log.debug("Requests limit: {}", requestsLimit);
     }
 
 
@@ -85,6 +95,18 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
             throw new AccessDeniedException("Current user can't send request to gateway " + gateway.getId());
         }
 
+        String target = getTarget(gateway, message);
+        long count = requestRepository.countByFinishedAndTarget(false, target);
+        if (count >= requestsLimit) {
+            throw new BrokerException(
+                String.format(
+                    "Can't send request - reached limit[%d] of unfinished requests for target. Current count = %d",
+                    requestsLimit,
+                    count
+                )
+            );
+        }
+
         UserEntity user = getCurrentUser();
         GatewayRequestEntity requestEntity = new GatewayRequestEntity();
         requestEntity.setFinished(false);
@@ -92,6 +114,7 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
         requestEntity.setSentDate(LocalDateTime.now());
         requestEntity.setGateway(gateway);
         requestEntity.setUser(user);
+        requestEntity.setTarget(target);
         requestRepository.save(requestEntity);
 
         message.setRequestId(requestEntity.getId());
@@ -103,7 +126,7 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
     }
 
     @Override
-    public void addResponseListeners() throws IOException, TimeoutException {
+    public void addResponseListeners() throws IOException {
         List<GatewayEntity> entities = gatewayRepository.findAll();
         if (entities.size() == 0) {
             log.info("No gateways were found -> skipping response listeners creation");
@@ -129,6 +152,13 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
     public void removeResponseListener(GatewayEntity entity) throws IOException {
         rabbitMqService.removeQueueListener(entity);
         rabbitMqService.deleteQueues(entity);
+    }
+
+    private <T extends BaseMessage> String getTarget(GatewayEntity gateway, T message) {
+        if (message instanceof DeviceRequestMessage) {
+            return ((DeviceRequestMessage) message).getTarget();
+        }
+        return gateway.getId();
     }
 
     private UserEntity getCurrentUser() throws AuthenticationException {

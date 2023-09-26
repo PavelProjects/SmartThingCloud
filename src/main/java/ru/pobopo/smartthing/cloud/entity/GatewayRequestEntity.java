@@ -32,6 +32,9 @@ public class GatewayRequestEntity {
     @JoinColumn(name = "gateway_id", nullable = false)
     private GatewayEntity gateway;
 
+    @Column
+    private String target;
+
     @Column(name = "sent_date", nullable = false)
     private LocalDateTime sentDate = LocalDateTime.now();
 
