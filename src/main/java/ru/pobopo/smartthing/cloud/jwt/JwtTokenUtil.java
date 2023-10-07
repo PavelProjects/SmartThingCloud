@@ -6,26 +6,34 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
 import java.util.function.Function;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public class JwtTokenUtil {
     private static final long serialVersionUID = -2550185165626007488L;
     public static final long JWT_TOKEN_VALIDITY = 3600000;
 
-//    private final String secret;
     private final Key key;
     private final JwtParser parser;
 
     @Autowired
     public JwtTokenUtil(Environment env) {
-//        this.secret = env.getProperty("JWT_SECRET", Keys.secretKeyFor(SignatureAlgorithm.ES512).toString());
-        this.key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+        String secret = env.getProperty("JWT_SECRET");
+        if (StringUtils.isBlank(secret)) {
+            log.error("JWT_SECRET env variable missing! generating new random key for JWT.");
+            this.key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+        } else {
+            this.key = Keys.hmacShaKeyFor(secret.getBytes());
+        }
         this.parser = Jwts.parserBuilder().setSigningKey(key).build();
     }
 
