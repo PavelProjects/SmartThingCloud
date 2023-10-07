@@ -66,8 +66,6 @@ public class GatewayServiceImpl implements GatewayService {
         gatewayEntity.setQueueOut(prefix + "_out");
         gatewayRepository.save(gatewayEntity);
 
-        brokerService.addResponseListener(gatewayEntity);
-
         return gatewayEntity;
     }
 

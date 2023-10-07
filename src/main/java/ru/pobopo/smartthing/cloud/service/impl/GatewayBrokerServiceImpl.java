@@ -5,14 +5,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.TimeoutException;
 import javax.naming.AuthenticationException;
 import javax.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
-import org.springframework.data.domain.Example;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
@@ -21,6 +20,8 @@ import org.webjars.NotFoundException;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.entity.GatewayRequestEntity;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
+import ru.pobopo.smartthing.cloud.event.GatewayLoginEvent;
+import ru.pobopo.smartthing.cloud.event.GatewayLogoutEvent;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.BrokerException;
 import ru.pobopo.smartthing.cloud.rabbitmq.DeviceRequestMessage;
@@ -31,6 +32,7 @@ import ru.pobopo.smartthing.cloud.service.GatewayBrokerService;
 import ru.pobopo.smartthing.cloud.service.GatewayResponseProcessor;
 import ru.pobopo.smartthing.cloud.service.RabbitMqService;
 import ru.pobopo.smartthing.cloud.rabbitmq.BaseMessage;
+import ru.pobopo.smartthing.cloud.service.TokenService;
 
 @Component
 @Slf4j
@@ -42,6 +44,7 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
     private final GatewayRepository gatewayRepository;
     private final RabbitMqService rabbitMqService;
     private final GatewayResponseProcessor responseProcessor;
+    private final TokenService tokenService;
 
     @Autowired
     public GatewayBrokerServiceImpl(
@@ -50,7 +53,8 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
         UserRepository userRepository,
         RabbitMqService rabbitMqService,
         GatewayRepository gatewayRepository,
-        GatewayResponseProcessor responseProcessor
+        GatewayResponseProcessor responseProcessor,
+        TokenService tokenService
     ) {
         this.requestRepository = requestRepository;
         this.userRepository = userRepository;
@@ -58,6 +62,7 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
         this.gatewayRepository = gatewayRepository;
         this.responseProcessor = responseProcessor;
         this.requestsLimit = Integer.parseInt(environment.getProperty("REQUESTS_LIMIT", "10"));
+        this.tokenService = tokenService;
 
         log.debug("Requests limit: {}", requestsLimit);
     }
@@ -135,7 +140,11 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
 
         log.info("Adding response listeners for gateways. Total count: {}", entities.size());
         for (GatewayEntity entity: entities) {
-            addResponseListener(entity);
+            if (tokenService.isAuthorized(entity)) {
+                addResponseListener(entity);
+            } else {
+                log.warn("Gateway {} not authorized! Skipping response listener creation.", entity);
+            }
         }
         log.info("Response listeners added.");
     }
@@ -152,6 +161,24 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
     public void removeResponseListener(GatewayEntity entity) throws IOException {
         rabbitMqService.removeQueueListener(entity);
         rabbitMqService.deleteQueues(entity);
+    }
+
+    @EventListener
+    public void gatewayLogoutEvent(GatewayLogoutEvent event) throws IOException {
+        if (event.getGateway() == null) {
+            log.error("There is no gateway in event!");
+        }
+        log.warn("Gateway's token logout, removing queue response listener and queues.");
+        removeResponseListener(event.getGateway());
+    }
+
+    @EventListener
+    public void gatewayLoginEvent(GatewayLoginEvent event) throws IOException {
+        if (event.getGateway() == null) {
+            log.error("There is no gateway in event!");
+        }
+        log.info("Gateway login, creating queues and queue response listener.");
+        addResponseListener(event.getGateway());
     }
 
     private <T extends BaseMessage> String getTarget(GatewayEntity gateway, T message) {

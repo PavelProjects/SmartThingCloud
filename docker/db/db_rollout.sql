@@ -62,7 +62,7 @@ create table smt_token_info (
     creation_date timestamp with time zone not null default now(),
     deactivation_date timestamp with time zone,
     active boolean not null default false,
-    type char(16) not null,
+    type varchar(16) not null,
     owner_id char(8) not null references smt_user(id),
     gateway_id char(8) references smt_gateway(id)
 );

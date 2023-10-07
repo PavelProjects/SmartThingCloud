@@ -61,12 +61,14 @@ public class RabbitMqServiceImpl implements RabbitMqService {
     public void createQueues(GatewayEntity entity) throws IOException {
         channel.queueDeclare(entity.getQueueIn(), false, false, false, null);
         channel.queueDeclare(entity.getQueueOut(), false, false, false, null);
+        log.info("Created queues for {}", entity);
     }
 
     @Override
     public void deleteQueues(GatewayEntity entity) throws IOException {
         channel.queueDelete(entity.getQueueIn());
         channel.queueDelete(entity.getQueueOut());
+        log.info("Removed queues for {}", entity);
     }
 
     @Override

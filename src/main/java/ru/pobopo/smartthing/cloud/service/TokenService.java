@@ -14,6 +14,7 @@ public interface TokenService {
     String generateToken(UserEntity user, GatewayEntity gatewayEntity) throws AuthenticationException, AccessDeniedException;
 
     UserDetails validateToken(String token) throws AccessDeniedException, AuthenticationException;
+    boolean isAuthorized(GatewayEntity gateway);
 
     void deactivateToken(String tokenId) throws AccessDeniedException, AuthenticationException;
 
