@@ -31,7 +31,7 @@ import ru.pobopo.smartthing.cloud.service.RabbitMqService;
 import ru.pobopo.smartthing.cloud.rabbitmq.BaseMessage;
 import ru.pobopo.smartthing.cloud.rabbitmq.DeviceRequestMessage;
 import ru.pobopo.smartthing.cloud.rabbitmq.GatewayCommand;
-import ru.pobopo.smartthing.cloud.service.model.GatewayMessageType;
+import ru.pobopo.smartthing.cloud.rabbitmq.GatewayMessageType;
 
 @Component
 @Slf4j
