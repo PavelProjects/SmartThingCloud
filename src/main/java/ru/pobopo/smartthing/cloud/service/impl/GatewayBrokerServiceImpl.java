@@ -32,7 +32,6 @@ import ru.pobopo.smartthing.cloud.service.GatewayBrokerService;
 import ru.pobopo.smartthing.cloud.service.GatewayResponseProcessor;
 import ru.pobopo.smartthing.cloud.service.RabbitMqService;
 import ru.pobopo.smartthing.cloud.rabbitmq.BaseMessage;
-import ru.pobopo.smartthing.cloud.service.TokenService;
 
 @Component
 @Slf4j
@@ -44,7 +43,6 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
     private final GatewayRepository gatewayRepository;
     private final RabbitMqService rabbitMqService;
     private final GatewayResponseProcessor responseProcessor;
-    private final TokenService tokenService;
 
     @Autowired
     public GatewayBrokerServiceImpl(
@@ -53,8 +51,7 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
         UserRepository userRepository,
         RabbitMqService rabbitMqService,
         GatewayRepository gatewayRepository,
-        GatewayResponseProcessor responseProcessor,
-        TokenService tokenService
+        GatewayResponseProcessor responseProcessor
     ) {
         this.requestRepository = requestRepository;
         this.userRepository = userRepository;
@@ -62,7 +59,6 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
         this.gatewayRepository = gatewayRepository;
         this.responseProcessor = responseProcessor;
         this.requestsLimit = Integer.parseInt(environment.getProperty("REQUESTS_LIMIT", "10"));
-        this.tokenService = tokenService;
 
         log.debug("Requests limit: {}", requestsLimit);
     }
@@ -70,7 +66,7 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
 
     @Override
     public List<GatewayRequestEntity> getUserRequests(int page, int size) throws AuthenticationException {
-        return requestRepository.findByUser(getCurrentUser(), PageRequest.of(page, size, Sort.by("sentDate").descending()));
+        return requestRepository.findByUser(AuthoritiesUtil.getCurrentUser(), PageRequest.of(page, size, Sort.by("sentDate").descending()));
     }
 
     @Override
@@ -78,7 +74,7 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
         if (StringUtils.isBlank(id)) {
             throw new ValidationException("Request id is missing!");
         }
-        return requestRepository.findByUserAndId(getCurrentUser(), id);
+        return requestRepository.findByUserAndId(AuthoritiesUtil.getCurrentUser(), id);
     }
 
     @Override
@@ -112,7 +108,7 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
             );
         }
 
-        UserEntity user = getCurrentUser();
+        UserEntity user = AuthoritiesUtil.getCurrentUser();
         GatewayRequestEntity requestEntity = new GatewayRequestEntity();
         requestEntity.setFinished(false);
         requestEntity.setMessage(message.toString());
@@ -140,7 +136,7 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
 
         log.info("Adding response listeners for gateways. Total count: {}", entities.size());
         for (GatewayEntity entity: entities) {
-            if (tokenService.isAuthorized(entity)) {
+            if (StringUtils.isNotBlank(entity.getQueueIn()) && StringUtils.isNotBlank(entity.getQueueOut())) {
                 addResponseListener(entity);
             } else {
                 log.warn("Gateway {} not authorized! Skipping response listener creation.", entity);
@@ -186,11 +182,5 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
             return ((DeviceRequestMessage) message).getTarget();
         }
         return gateway.getId();
-    }
-
-    private UserEntity getCurrentUser() throws AuthenticationException {
-        UserEntity user = userRepository.findByLogin(AuthoritiesUtil.getCurrentUserLogin());
-        Objects.requireNonNull(user, "Can't find user " + AuthoritiesUtil.getCurrentUserLogin());
-        return user;
     }
 }

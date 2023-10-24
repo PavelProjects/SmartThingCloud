@@ -6,8 +6,10 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,6 +42,7 @@ public class RabbitMqServiceImpl implements RabbitMqService {
     private Connection connection;
     private Channel channel;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final Set<String> consumersTags = new HashSet<>();
 
     @Autowired
     public RabbitMqServiceImpl(ConnectionFactory connectionFactory) {
@@ -73,17 +76,25 @@ public class RabbitMqServiceImpl implements RabbitMqService {
 
     @Override
     public void addQueueListener(GatewayEntity entity, Consumer<MessageResponse> consumer) throws IOException {
+        String consumerTag = buildConsumerTag(entity); // very bad todo rework!
+        if (consumersTags.contains(consumerTag)) {
+            log.info("Consumer with tag {} already exists", consumerTag);
+            return;
+        }
         channel.basicConsume(
             entity.getQueueOut(),
             false,
-            buildConsumerTag(entity),
+            consumerTag,
             new MessageConsumer(channel, consumer)
         );
+        consumersTags.add(consumerTag);
     }
 
     @Override
     public void removeQueueListener(GatewayEntity entity) throws IOException {
-        channel.basicCancel(buildConsumerTag(entity));
+        String consumerTag = buildConsumerTag(entity);
+        channel.basicCancel(consumerTag);
+        consumersTags.remove(consumerTag);
     }
 
     @Override

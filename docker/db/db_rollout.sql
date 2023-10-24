@@ -57,16 +57,6 @@ create table smt_gateway_owner (
     unique(user_id, gateway_id)
 );
 
-create table smt_token_info (
-    id char(8) primary key default getnextid(),
-    creation_date timestamp with time zone not null default now(),
-    deactivation_date timestamp with time zone,
-    active boolean not null default false,
-    type varchar(16) not null,
-    owner_id char(8) not null references smt_user(id),
-    gateway_id char(8) references smt_gateway(id)
-);
-
 create table smt_gateway_request (
     id char(8) primary key default getnextid(),
     sent_date timestamp with time zone not null default now(),

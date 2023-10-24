@@ -11,12 +11,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import ru.pobopo.smartthing.cloud.context.ContextHolder;
-import ru.pobopo.smartthing.cloud.service.TokenService;
+import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
+import ru.pobopo.smartthing.cloud.service.AuthService;
 
 @Component
 public class SecurityFilter extends OncePerRequestFilter {
@@ -24,11 +23,11 @@ public class SecurityFilter extends OncePerRequestFilter {
     private static final String USER_TOKEN_HEADER = "SmartThing-Token-User";
     private static final String GATEWAY_TOKEN_HEADER = "SmartThing-Token-Gateway";
 
-    private final TokenService tokenService;
+    private final AuthService authService;
 
     @Autowired
-    public SecurityFilter(TokenService tokenService) {
-        this.tokenService = tokenService;
+    public SecurityFilter(AuthService authService) {
+        this.authService = authService;
     }
 
     @Override
@@ -37,7 +36,7 @@ public class SecurityFilter extends OncePerRequestFilter {
             String token = StringUtils.firstNonBlank(request.getHeader(USER_TOKEN_HEADER), request.getHeader(GATEWAY_TOKEN_HEADER));
             if (StringUtils.isNotBlank(token)) {
                 try {
-                    setUserDetailsToContext(tokenService.validateToken(token), request);
+                    setUserDetailsToContext(authService.validateToken(token), request);
                 } catch (Exception e) {
                     log.error("Token validation failed: {}", e.getMessage());
                 }
@@ -49,17 +48,16 @@ public class SecurityFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
 
         SecurityContextHolder.clearContext();
-        ContextHolder.clearContext();
     }
 
-    private void setUserDetailsToContext(UserDetails userDetails, HttpServletRequest request) {
-        if (userDetails == null) {
+    private void setUserDetailsToContext(AuthorizedUser authorizedUser, HttpServletRequest request) {
+        if (authorizedUser == null) {
             return;
         }
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-            userDetails,
-            null,
-            userDetails.getAuthorities()
+            authorizedUser,
+            "",
+            authorizedUser.getAuthorities()
         );
         authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);

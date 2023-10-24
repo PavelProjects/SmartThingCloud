@@ -37,7 +37,7 @@ public class RequestTemplateServiceImpl implements RequestTemplateService {
 
     @Override
     public List<RequestTemplateEntity> getRequestTemplates() throws AuthenticationException {
-        return requestTemplateRepository.findByOwnerOrOwnerIsNull(getCurrentUser());
+        return requestTemplateRepository.findByOwnerOrOwnerIsNull(AuthoritiesUtil.getCurrentUser());
     }
 
     @Override
@@ -57,7 +57,7 @@ public class RequestTemplateServiceImpl implements RequestTemplateService {
         }
 
         RequestTemplateEntity entity = requestTemplateMapper.toEntity(requestTemplateDto);
-        entity.setOwner(getCurrentUser());
+        entity.setOwner(AuthoritiesUtil.getCurrentUser());
         requestTemplateRepository.save(entity);
         return entity;
     }
@@ -99,11 +99,5 @@ public class RequestTemplateServiceImpl implements RequestTemplateService {
             throw new AccessDeniedException("Current user can't manage this template!");
         }
         return entity.get();
-    }
-
-    private UserEntity getCurrentUser() throws AuthenticationException {
-        UserEntity user = userRepository.findByLogin(AuthoritiesUtil.getCurrentUserLogin());
-        Objects.requireNonNull(user, "Can't find user " + AuthoritiesUtil.getCurrentUserLogin());
-        return user;
     }
 }

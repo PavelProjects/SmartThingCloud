@@ -5,16 +5,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ru.pobopo.smartthing.cloud.jwt.TokenType;
+import ru.pobopo.smartthing.cloud.model.TokenType;
+import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
 import ru.pobopo.smartthing.cloud.rabbitmq.RabbitCreditsHolder;
-import ru.pobopo.smartthing.cloud.context.ContextHolder;
 import ru.pobopo.smartthing.cloud.controller.model.rabbitmq.BasicCheck;
 import ru.pobopo.smartthing.cloud.controller.model.rabbitmq.ResourceCheck;
 import ru.pobopo.smartthing.cloud.controller.model.rabbitmq.TopicCheck;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
+import ru.pobopo.smartthing.cloud.service.AuthService;
 import ru.pobopo.smartthing.cloud.service.RabbitAuthService;
-import ru.pobopo.smartthing.cloud.service.TokenService;
 
 @Component
 @Slf4j
@@ -23,18 +23,18 @@ public class RabbitAuthServiceImpl implements RabbitAuthService {
     private static final String DENY = "deny";
 
     private final RabbitCreditsHolder creditsHolder;
-    private final TokenService tokenService;
     private final GatewayRepository gatewayRepository;
-
+    private final AuthService authService;
+    
     @Autowired
     public RabbitAuthServiceImpl(
         RabbitCreditsHolder creditsHolder,
-        TokenService tokenService,
-        GatewayRepository gatewayRepository
+        GatewayRepository gatewayRepository,
+        AuthService authService
     ) {
         this.creditsHolder = creditsHolder;
-        this.tokenService = tokenService;
         this.gatewayRepository = gatewayRepository;
+        this.authService = authService;
     }
 
         /*
@@ -46,14 +46,14 @@ public class RabbitAuthServiceImpl implements RabbitAuthService {
             return StringUtils.equals(creditsHolder.getPassword(), password) ? ALLOW : DENY;
         }
         try {
-            tokenService.validateToken(password);
-            if (!TokenType.GATEWAY.equals(ContextHolder.getTokenType())) {
-                log.error("Wrong token type! Got {}", ContextHolder.getTokenType().getName());
+            AuthorizedUser authorizedUser = authService.validateToken(password);
+            if (!TokenType.GATEWAY.equals(authorizedUser.getTokenType())) {
+                log.error("Wrong token type! Got {}", authorizedUser.getTokenType().getName());
                 return DENY;
             }
-            GatewayEntity gateway = ContextHolder.getCurrentGateway();
+            GatewayEntity gateway = authorizedUser.getGateway();
             if (gateway == null) {
-                log.warn("No gateway in context! Wrong token?");
+                log.warn("No gateway in authorization!");
                 return DENY;
             }
             return StringUtils.equals(gateway.getId(), username) ? ALLOW : DENY;

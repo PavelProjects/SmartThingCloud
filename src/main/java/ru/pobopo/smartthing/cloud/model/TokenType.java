@@ -1,4 +1,4 @@
-package ru.pobopo.smartthing.cloud.jwt;
+package ru.pobopo.smartthing.cloud.model;
 
 import org.apache.commons.lang3.StringUtils;
 

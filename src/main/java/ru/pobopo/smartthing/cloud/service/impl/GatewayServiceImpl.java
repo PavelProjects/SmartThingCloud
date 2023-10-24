@@ -19,7 +19,6 @@ import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.repository.GatewayRequestRepository;
-import ru.pobopo.smartthing.cloud.repository.TokenInfoRepository;
 import ru.pobopo.smartthing.cloud.repository.UserRepository;
 import ru.pobopo.smartthing.cloud.service.GatewayService;
 
@@ -28,7 +27,6 @@ import ru.pobopo.smartthing.cloud.service.GatewayService;
 public class GatewayServiceImpl implements GatewayService {
     private final GatewayRepository gatewayRepository;
     private final GatewayRequestRepository requestRepository;
-    private final TokenInfoRepository tokenInfoRepository;
     private final UserRepository userRepository;
     private final GatewayBrokerServiceImpl brokerService;
 
@@ -36,13 +34,11 @@ public class GatewayServiceImpl implements GatewayService {
     public GatewayServiceImpl(
         GatewayRepository gatewayRepository,
         GatewayRequestRepository requestRepository,
-        TokenInfoRepository tokenInfoRepository,
         UserRepository userRepository,
         GatewayBrokerServiceImpl brokerService
     ) {
         this.gatewayRepository = gatewayRepository;
         this.requestRepository = requestRepository;
-        this.tokenInfoRepository = tokenInfoRepository;
         this.userRepository = userRepository;
         this.brokerService = brokerService;
     }
@@ -50,11 +46,11 @@ public class GatewayServiceImpl implements GatewayService {
     @Override
     @Transactional
     public GatewayEntity createGateway(String name, String description)
-        throws AuthenticationException, ValidationException, IOException, TimeoutException {
+        throws AuthenticationException, ValidationException {
         validateName(name);
 
         GatewayEntity gatewayEntity = new GatewayEntity();
-        gatewayEntity.setOwner(userRepository.findByLogin(AuthoritiesUtil.getCurrentUserLogin()));
+        gatewayEntity.setOwner(AuthoritiesUtil.getCurrentUser());
         gatewayEntity.setName(name);
         gatewayEntity.setDescription(description);
         gatewayEntity.setCreationDate(LocalDateTime.now());
@@ -94,8 +90,6 @@ public class GatewayServiceImpl implements GatewayService {
 
         log.warn("Deleting gateway's requests");
         requestRepository.deleteByGateway(entity);
-        log.warn("Deleting gateway's token");
-        tokenInfoRepository.deleteByGateway(entity);
         log.warn("Deleting gateway queues and response listeners");
         brokerService.removeResponseListener(entity);
 
@@ -105,12 +99,12 @@ public class GatewayServiceImpl implements GatewayService {
 
     @Override
     public List<GatewayEntity> getUserGateways() throws AuthenticationException {
-        return gatewayRepository.findByOwnerLogin(AuthoritiesUtil.getCurrentUserLogin());
+        return gatewayRepository.findByOwnerLogin(AuthoritiesUtil.getCurrentUser().getLogin());
     }
 
     @Override
     public GatewayEntity getUserGatewayByName(String name) throws AuthenticationException {
-        return gatewayRepository.findByNameAndOwnerLogin(name, AuthoritiesUtil.getCurrentUserLogin());
+        return gatewayRepository.findByNameAndOwnerLogin(name, AuthoritiesUtil.getCurrentUser().getLogin());
     }
 
     @Override

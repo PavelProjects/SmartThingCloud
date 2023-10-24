@@ -1,60 +1,54 @@
 package ru.pobopo.smartthing.cloud.service.impl;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import javax.naming.AuthenticationException;
-import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-import ru.pobopo.smartthing.cloud.context.ContextHolder;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
-import ru.pobopo.smartthing.cloud.entity.TokenInfoEntity;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
+import ru.pobopo.smartthing.cloud.event.GatewayLoginEvent;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
-import ru.pobopo.smartthing.cloud.jwt.TokenType;
+import ru.pobopo.smartthing.cloud.jwt.JwtTokenUtil;
+import ru.pobopo.smartthing.cloud.model.TokenType;
+import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.repository.UserRepository;
-import ru.pobopo.smartthing.cloud.service.TokenService;
 import ru.pobopo.smartthing.cloud.service.AuthService;
 
 @Component
+@Slf4j
 public class AuthServiceImpl implements AuthService {
-
-    private final AuthenticationManager authenticationManager;
-    private final TokenService tokenService;
     private final UserRepository userRepository;
     private final GatewayRepository gatewayRepository;
+    private final JwtTokenUtil jwtTokenUtil;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Autowired
     public AuthServiceImpl(
-        AuthenticationManager authenticationManager,
-        TokenService tokenService,
         UserRepository userRepository,
-        GatewayRepository gatewayRepository
+        GatewayRepository gatewayRepository,
+        JwtTokenUtil jwtTokenUtil,
+        ApplicationEventPublisher applicationEventPublisher
     ) {
-        this.authenticationManager = authenticationManager;
-        this.tokenService = tokenService;
         this.userRepository = userRepository;
         this.gatewayRepository = gatewayRepository;
+        this.jwtTokenUtil = jwtTokenUtil;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     @Override
-    public String authUser(String login, String password)
-        throws ValidationException, AuthenticationException, AccessDeniedException {
-        Authentication auth = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(login, password)
-        );
-        if (!auth.isAuthenticated()) {
-            throw new BadCredentialsException("Wrong user credits");
-        }
-        return tokenService.generateToken(getUser(login));
+    public String authUser(Authentication auth) {
+        UserDetails userDetails = (UserDetails) auth.getPrincipal();
+        UserEntity user = userRepository.findByLogin(userDetails.getUsername());
+        AuthorizedUser authorizedUser = AuthorizedUser.build(TokenType.USER, user, userDetails.getAuthorities());
+        return generateToken(authorizedUser);
     }
 
     @Override
@@ -73,50 +67,58 @@ public class AuthServiceImpl implements AuthService {
             throw new AccessDeniedException("Current user can't manage gateway " + gatewayId);
         }
 
-        return tokenService.generateToken(getCurrentUser(), gatewayEntity.get());
+        AuthorizedUser user = (AuthorizedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AuthorizedUser authorizedUser = AuthorizedUser.build(
+            TokenType.GATEWAY,
+            user.getUser(),
+            user.getAuthorities(),
+            gatewayEntity.get()
+        );
+        String token = generateToken(authorizedUser);
+
+        log.warn("Sending gateway login event");
+        applicationEventPublisher.publishEvent(new GatewayLoginEvent(this, gatewayEntity.get()));
+
+        return token;
     }
 
     @Override
-    public void userLogout() throws ValidationException, AccessDeniedException, AuthenticationException {
-        logout(TokenType.USER);
+    public AuthorizedUser validateToken(String token) throws AccessDeniedException {
+        if (StringUtils.isBlank(token)) {
+            throw new AccessDeniedException("Token is missing!");
+        }
+        if (jwtTokenUtil.isTokenExpired(token)) {
+            throw new AccessDeniedException("Token expired!");
+        }
+        AuthorizedUser authorizedUser = AuthorizedUser.fromClaims(jwtTokenUtil.getAllClaimsFromToken(token));
+        checkExistence(authorizedUser);
+        return authorizedUser;
     }
 
-    @Override
-    public void gatewayLogout() throws ValidationException, AccessDeniedException, AuthenticationException {
-        logout(TokenType.GATEWAY);
-    }
-
-    @Override
-    public List<GatewayEntity> getUserAuthorizedGateways()
-        throws ValidationException, AuthenticationException {
-        UserEntity user = getCurrentUser();
-        List<TokenInfoEntity> tokens = tokenService.getActiveGatewayTokens(user);
-        if (tokens.isEmpty()) {
-            return List.of();
+    private void checkExistence(AuthorizedUser authorizedUser) throws AccessDeniedException {
+        if (authorizedUser.getUser() == null) {
+            log.error("Missing user in token");
+            throw new AccessDeniedException();
+        }
+        if (!userRepository.existsById(authorizedUser.getUser().getId())) {
+            throw new AccessDeniedException("User not found");
         }
 
-        return tokens.stream().map(TokenInfoEntity::getGateway).collect(Collectors.toList());
+        if (authorizedUser.getTokenType() == TokenType.GATEWAY) {
+            if (authorizedUser.getGateway() == null) {
+                throw new AccessDeniedException();
+            }
+
+            if (!gatewayRepository.existsById(authorizedUser.getGateway().getId())) {
+                throw new AccessDeniedException("Gateway not found");
+            }
+        }
     }
 
-    private void logout(@NonNull TokenType requiredType) throws ValidationException, AccessDeniedException, AuthenticationException {
-        if (!requiredType.equals(ContextHolder.getTokenType())) {
-            throw new ValidationException("Wrong token type!");
-        }
-        tokenService.deactivateToken(ContextHolder.getTokenId());
-    }
-
-    private UserEntity getCurrentUser() throws ValidationException, AuthenticationException {
-        return getUser(AuthoritiesUtil.getCurrentUserLogin());
-    }
-
-    private UserEntity getUser(String login) throws ValidationException {
-        if (StringUtils.isBlank(login)) {
-            throw new ValidationException("Login is missing");
-        }
-        UserEntity user = userRepository.findByLogin(login);
-        if (user == null) {
-            throw new ValidationException("User not found!");
-        }
-        return user;
+    private String generateToken(AuthorizedUser authorizedUser) {
+        return jwtTokenUtil.doGenerateToken(
+            authorizedUser.getTokenType().getName(),
+            authorizedUser.toClaims()
+        );
     }
 }

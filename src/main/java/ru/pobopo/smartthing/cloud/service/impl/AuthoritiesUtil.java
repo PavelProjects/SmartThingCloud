@@ -12,7 +12,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.entity.RequestTemplateEntity;
-import ru.pobopo.smartthing.cloud.entity.TokenInfoEntity;
+import ru.pobopo.smartthing.cloud.entity.UserEntity;
+import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
 
 @Service
 public class AuthoritiesUtil {
@@ -27,17 +28,8 @@ public class AuthoritiesUtil {
      */
 
     @NotNull
-    public static String getCurrentUserLogin() throws AuthenticationException {
-        return getCurrentUser().getName();
-    }
-
-    public static boolean canManageToken(TokenInfoEntity entity) throws AuthenticationException {
-        if (entity == null || entity.getOwner() == null) {
-            return false;
-        }
-
-        Authentication authentication = getCurrentUser();
-        return checkAuthority(authentication, List.of(ADMIN_ROLE)) || isSameUser(authentication, entity.getOwner().getLogin());
+    public static UserEntity getCurrentUser() throws AuthenticationException {
+        return getAuthorizedUser().getUser();
     }
 
     /**
@@ -50,7 +42,7 @@ public class AuthoritiesUtil {
         if (gatewayEntity == null || gatewayEntity.getOwner() == null) {
             return false;
         }
-        Authentication authentication = getCurrentUser();
+        AuthorizedUser authentication = getAuthorizedUser();
         return checkAuthority(authentication, List.of(ADMIN_ROLE, GATEWAY_ADMIN_ROLE))
                || isSameUser(authentication, gatewayEntity.getOwner().getLogin());
     }
@@ -65,7 +57,7 @@ public class AuthoritiesUtil {
         if (entity == null || entity.getOwner() == null) {
             return false;
         }
-        Authentication authentication = getCurrentUser();
+        AuthorizedUser authentication = getAuthorizedUser();
         return checkAuthority(authentication, List.of(ADMIN_ROLE)) || isSameUser(authentication, entity.getOwner().getLogin());
     }
 
@@ -73,7 +65,7 @@ public class AuthoritiesUtil {
      * Проверяет наличие прав у юзера
      * @param authorities набор прав, которые должны быть у юзера для получения доступа
      */
-    private static boolean checkAuthority(Authentication authentication, Collection<String> authorities) {
+    private static boolean checkAuthority(AuthorizedUser authentication, Collection<String> authorities) {
         Collection<? extends GrantedAuthority> userAuthorities = authentication.getAuthorities();
         if (userAuthorities == null || userAuthorities.isEmpty() || userAuthorities.size() < authorities.size()) {
             return false;
@@ -81,13 +73,13 @@ public class AuthoritiesUtil {
         return authorities.containsAll(userAuthorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
     }
 
-    private static boolean isSameUser(Authentication authentication, String userLogin) {
-        return StringUtils.equals(userLogin, authentication.getName());
+    private static boolean isSameUser(AuthorizedUser authentication, String userLogin) {
+        return StringUtils.equals(userLogin, authentication.getUser().getLogin());
     }
 
-    private static Authentication getCurrentUser() throws AuthenticationException {
-        Authentication currentUser = SecurityContextHolder.getContext().getAuthentication();
-        if (currentUser == null || StringUtils.isBlank(currentUser.getName())) {
+    private static AuthorizedUser getAuthorizedUser() throws AuthenticationException {
+        AuthorizedUser currentUser = (AuthorizedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (currentUser == null || currentUser.getUser() == null) {
             throw new AuthenticationException("Current user didn't authenticate!");
         }
         return currentUser;

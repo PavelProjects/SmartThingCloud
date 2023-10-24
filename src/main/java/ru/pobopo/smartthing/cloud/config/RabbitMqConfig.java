@@ -10,14 +10,14 @@ import ru.pobopo.smartthing.cloud.rabbitmq.RabbitCreditsHolder;
 public class RabbitMqConfig {
     @Bean
     public RabbitCreditsHolder creditsHolder(Environment environment) {
-        String user = environment.getProperty("BROKER_USER", "supercoollogin");
-        String password = environment.getProperty("BROKER_PASSWORD", "evenmorecoolerpassword");
+        String user = environment.getProperty("BROKER_USER", "cloudadmin");
+        String password = environment.getProperty("BROKER_PASSWORD", "supercoolpassword");
         return new RabbitCreditsHolder(user, password);
     }
 
     @Bean
     public ConnectionFactory connectionFactory(Environment environment, RabbitCreditsHolder creditsHolder) {
-        String brokerHost = environment.getProperty("BROKER_HOST", "localhost");
+        String brokerHost = environment.getProperty("BROKER_HOST", "192.168.1.76");
         String brokerPort = environment.getProperty("BROKER_PORT", "5672");
 
         ConnectionFactory connectionFactory = new ConnectionFactory();
