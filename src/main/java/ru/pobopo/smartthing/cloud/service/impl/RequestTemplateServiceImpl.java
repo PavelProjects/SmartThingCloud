@@ -1,7 +1,6 @@
 package ru.pobopo.smartthing.cloud.service.impl;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import javax.naming.AuthenticationException;
 import javax.validation.ValidationException;
@@ -11,7 +10,6 @@ import org.springframework.stereotype.Component;
 import org.webjars.NotFoundException;
 import ru.pobopo.smartthing.cloud.dto.RequestTemplateDto;
 import ru.pobopo.smartthing.cloud.entity.RequestTemplateEntity;
-import ru.pobopo.smartthing.cloud.entity.UserEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.mapper.RequestTemplateMapper;
 import ru.pobopo.smartthing.cloud.repository.RequestTemplateRepository;
@@ -37,7 +35,7 @@ public class RequestTemplateServiceImpl implements RequestTemplateService {
 
     @Override
     public List<RequestTemplateEntity> getRequestTemplates() throws AuthenticationException {
-        return requestTemplateRepository.findByOwnerOrOwnerIsNull(AuthoritiesUtil.getCurrentUser());
+        return requestTemplateRepository.findByOwnerOrOwnerIsNull(AuthorisationUtils.getCurrentUser());
     }
 
     @Override
@@ -57,7 +55,7 @@ public class RequestTemplateServiceImpl implements RequestTemplateService {
         }
 
         RequestTemplateEntity entity = requestTemplateMapper.toEntity(requestTemplateDto);
-        entity.setOwner(AuthoritiesUtil.getCurrentUser());
+        entity.setOwner(AuthorisationUtils.getCurrentUser());
         requestTemplateRepository.save(entity);
         return entity;
     }
@@ -95,7 +93,7 @@ public class RequestTemplateServiceImpl implements RequestTemplateService {
             throw new NotFoundException("There is no request template with id " + id);
         }
 
-        if (!AuthoritiesUtil.canManageRequestTemplate(entity.get())) {
+        if (!AuthorisationUtils.canManageRequestTemplate(entity.get())) {
             throw new AccessDeniedException("Current user can't manage this template!");
         }
         return entity.get();

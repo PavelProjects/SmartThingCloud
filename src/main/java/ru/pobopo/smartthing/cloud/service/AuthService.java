@@ -12,4 +12,7 @@ public interface AuthService {
     String authUser(Authentication auth);
     String authGateway(String gatewayId) throws ValidationException, AuthenticationException, AccessDeniedException;
     AuthorizedUser validateToken(String token) throws AccessDeniedException;
+
+    void logout() throws AuthenticationException;
+    void logoutGateway(String gatewayId) throws ValidationException, AuthenticationException, AccessDeniedException;
 }

@@ -63,13 +63,13 @@ public class AuthenticationController {
         return new TokenResponse(authService.authGateway(request.getGatewayId()));
     }
 
-//    @PostMapping("/user/logout")
-//    public void userLogout() throws ValidationException, AccessDeniedException, AuthenticationException {
-//        authService.userLogout();
-//    }
-//
-//    @PostMapping("/gateway/logout")
-//    public void gatewayLogout() throws ValidationException, AccessDeniedException, AuthenticationException {
-//        authService.gatewayLogout();
-//    }
+    @PostMapping("/user/logout")
+    public void userLogout() throws AuthenticationException {
+        authService.logout();
+    }
+
+    @PostMapping("/gateway/logout")
+    public void gatewayLogout(@RequestBody String gatewayId) throws ValidationException, AccessDeniedException, AuthenticationException {
+        authService.logoutGateway(gatewayId);
+    }
 }

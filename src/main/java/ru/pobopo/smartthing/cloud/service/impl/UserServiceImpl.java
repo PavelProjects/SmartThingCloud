@@ -61,7 +61,7 @@ public class UserServiceImpl implements UserService {
         user.setCreationDate(LocalDateTime.now());
 
         userRepository.save(user);
-        grantUserRole(user, AuthoritiesUtil.USER_ROLE);
+        grantUserRole(user, AuthorisationUtils.USER_ROLE);
         return user;
     }
 

@@ -6,13 +6,13 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
 import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class JwtTokenUtil {
     private static final long serialVersionUID = -2550185165626007488L;
-    public static final long JWT_TOKEN_VALIDITY = 3600000;
 
     private final Key key;
     private final JwtParser parser;
@@ -66,12 +65,13 @@ public class JwtTokenUtil {
     //2. Sign the JWT using the HS512 algorithm and secret key.
     //3. According to JWS Compact Serialization(https://tools.ietf.org/html/draft-ietf-jose-json-web-signature-41#section-3.1)
     //   compaction of the JWT to a URL-safe string
-    public String doGenerateToken(String subject, Map<String, Object> claims) {
+    public String doGenerateToken(String subject, Map<String, Object> claims, long lifeTime) {
         return Jwts.builder()
             .setClaims(claims)
             .setSubject(subject)
             .setIssuedAt(new Date(System.currentTimeMillis()))
-            .setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY))
-            .signWith(key, SignatureAlgorithm.HS512).compact();
+            .setExpiration(new Date(System.currentTimeMillis() + lifeTime))
+            .signWith(key, SignatureAlgorithm.HS512)
+            .compact();
     }
 }

@@ -10,12 +10,15 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
 
-@Data
+@Getter
+@Setter
 @Builder
 public class AuthorizedUser implements Serializable {
     private final static String CLAIM_TOKEN_TYPE = "token_type";
@@ -99,5 +102,16 @@ public class AuthorizedUser implements Serializable {
         }
 
         return claims;
+    }
+
+    @Override
+    public String toString() {
+        return String.format(
+            "[Type=%s, UserId=%s, UserLogin=%s, GatewayId=%s]",
+            tokenType.getName(),
+            user.getId(),
+            user.getLogin(),
+            gateway != null ? gateway.getId() : ""
+        );
     }
 }

@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.naming.AuthenticationException;
 import javax.validation.constraints.NotNull;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -16,7 +14,7 @@ import ru.pobopo.smartthing.cloud.entity.UserEntity;
 import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
 
 @Service
-public class AuthoritiesUtil {
+public class AuthorisationUtils {
     public static final String USER_ROLE = "user";
     public static final String ADMIN_ROLE = "admin";
     public static final String GATEWAY_ADMIN_ROLE = "gateway_admin";
@@ -44,7 +42,7 @@ public class AuthoritiesUtil {
         }
         AuthorizedUser authentication = getAuthorizedUser();
         return checkAuthority(authentication, List.of(ADMIN_ROLE, GATEWAY_ADMIN_ROLE))
-               || isSameUser(authentication, gatewayEntity.getOwner().getLogin());
+               || isSameUser(authentication, gatewayEntity.getOwner());
     }
 
     /**
@@ -58,7 +56,7 @@ public class AuthoritiesUtil {
             return false;
         }
         AuthorizedUser authentication = getAuthorizedUser();
-        return checkAuthority(authentication, List.of(ADMIN_ROLE)) || isSameUser(authentication, entity.getOwner().getLogin());
+        return checkAuthority(authentication, List.of(ADMIN_ROLE)) || isSameUser(authentication, entity.getOwner());
     }
 
     /**
@@ -73,11 +71,12 @@ public class AuthoritiesUtil {
         return authorities.containsAll(userAuthorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
     }
 
-    private static boolean isSameUser(AuthorizedUser authentication, String userLogin) {
-        return StringUtils.equals(userLogin, authentication.getUser().getLogin());
+    private static boolean isSameUser(AuthorizedUser authentication, UserEntity user) {
+        return authentication.getUser().equals(user);
     }
 
-    private static AuthorizedUser getAuthorizedUser() throws AuthenticationException {
+    @NotNull
+    public static AuthorizedUser getAuthorizedUser() throws AuthenticationException {
         AuthorizedUser currentUser = (AuthorizedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (currentUser == null || currentUser.getUser() == null) {
             throw new AuthenticationException("Current user didn't authenticate!");

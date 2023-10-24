@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.GenericGenerator;
 
 @Entity
@@ -36,5 +37,19 @@ public class UserEntity {
             "User(id=%s, login=%s)",
             id, login
         );
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (obj == null || obj.getClass() != getClass()) {
+            return false;
+        }
+        UserEntity user = (UserEntity) obj;
+        return StringUtils.equals(user.getId(), getId())
+            && StringUtils.equals(user.getLogin(), getLogin());
     }
 }

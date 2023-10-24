@@ -66,7 +66,7 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
 
     @Override
     public List<GatewayRequestEntity> getUserRequests(int page, int size) throws AuthenticationException {
-        return requestRepository.findByUser(AuthoritiesUtil.getCurrentUser(), PageRequest.of(page, size, Sort.by("sentDate").descending()));
+        return requestRepository.findByUser(AuthorisationUtils.getCurrentUser(), PageRequest.of(page, size, Sort.by("sentDate").descending()));
     }
 
     @Override
@@ -74,7 +74,7 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
         if (StringUtils.isBlank(id)) {
             throw new ValidationException("Request id is missing!");
         }
-        return requestRepository.findByUserAndId(AuthoritiesUtil.getCurrentUser(), id);
+        return requestRepository.findByUserAndId(AuthorisationUtils.getCurrentUser(), id);
     }
 
     @Override
@@ -92,7 +92,7 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
         Objects.requireNonNull(gateway, "Gateway entity is missing!");
         Objects.requireNonNull(message, "Message object is missing");
 
-        if (!AuthoritiesUtil.canManageGateway(gateway)) {
+        if (!AuthorisationUtils.canManageGateway(gateway)) {
             throw new AccessDeniedException("Current user can't send request to gateway " + gateway.getId());
         }
 
@@ -108,7 +108,7 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
             );
         }
 
-        UserEntity user = AuthoritiesUtil.getCurrentUser();
+        UserEntity user = AuthorisationUtils.getCurrentUser();
         GatewayRequestEntity requestEntity = new GatewayRequestEntity();
         requestEntity.setFinished(false);
         requestEntity.setMessage(message.toString());

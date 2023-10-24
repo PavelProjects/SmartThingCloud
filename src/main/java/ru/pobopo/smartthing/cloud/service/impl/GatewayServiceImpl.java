@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeoutException;
 import javax.naming.AuthenticationException;
 import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +49,7 @@ public class GatewayServiceImpl implements GatewayService {
         validateName(name);
 
         GatewayEntity gatewayEntity = new GatewayEntity();
-        gatewayEntity.setOwner(AuthoritiesUtil.getCurrentUser());
+        gatewayEntity.setOwner(AuthorisationUtils.getCurrentUser());
         gatewayEntity.setName(name);
         gatewayEntity.setDescription(description);
         gatewayEntity.setCreationDate(LocalDateTime.now());
@@ -99,12 +98,12 @@ public class GatewayServiceImpl implements GatewayService {
 
     @Override
     public List<GatewayEntity> getUserGateways() throws AuthenticationException {
-        return gatewayRepository.findByOwnerLogin(AuthoritiesUtil.getCurrentUser().getLogin());
+        return gatewayRepository.findByOwnerLogin(AuthorisationUtils.getCurrentUser().getLogin());
     }
 
     @Override
     public GatewayEntity getUserGatewayByName(String name) throws AuthenticationException {
-        return gatewayRepository.findByNameAndOwnerLogin(name, AuthoritiesUtil.getCurrentUser().getLogin());
+        return gatewayRepository.findByNameAndOwnerLogin(name, AuthorisationUtils.getCurrentUser().getLogin());
     }
 
     @Override
@@ -124,7 +123,7 @@ public class GatewayServiceImpl implements GatewayService {
             throw new NotFoundException("Gateway with id " + id + " not found!");
         }
 
-        if (!AuthoritiesUtil.canManageGateway(gatewayOptional.get())) {
+        if (!AuthorisationUtils.canManageGateway(gatewayOptional.get())) {
             throw new AccessDeniedException("Current user can't manage gateway " + id);
         }
         return gatewayOptional.get();

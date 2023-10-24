@@ -5,14 +5,18 @@ import javax.naming.AuthenticationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
 import ru.pobopo.smartthing.cloud.event.GatewayLoginEvent;
+import ru.pobopo.smartthing.cloud.event.GatewayLogoutEvent;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.jwt.JwtTokenUtil;
@@ -29,18 +33,24 @@ public class AuthServiceImpl implements AuthService {
     private final GatewayRepository gatewayRepository;
     private final JwtTokenUtil jwtTokenUtil;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final JedisPool jedisPool;
+
+    @Value("${jwt.token.ttl}")
+    private long tokenTimeToLive;
 
     @Autowired
     public AuthServiceImpl(
         UserRepository userRepository,
         GatewayRepository gatewayRepository,
         JwtTokenUtil jwtTokenUtil,
-        ApplicationEventPublisher applicationEventPublisher
+        ApplicationEventPublisher applicationEventPublisher,
+        JedisPool jedisPool
     ) {
         this.userRepository = userRepository;
         this.gatewayRepository = gatewayRepository;
         this.jwtTokenUtil = jwtTokenUtil;
         this.applicationEventPublisher = applicationEventPublisher;
+        this.jedisPool = jedisPool;
     }
 
     @Override
@@ -48,36 +58,29 @@ public class AuthServiceImpl implements AuthService {
         UserDetails userDetails = (UserDetails) auth.getPrincipal();
         UserEntity user = userRepository.findByLogin(userDetails.getUsername());
         AuthorizedUser authorizedUser = AuthorizedUser.build(TokenType.USER, user, userDetails.getAuthorities());
-        return generateToken(authorizedUser);
+        return generateTokenIfNeedTo(authorizedUser);
     }
 
     @Override
     public String authGateway(String gatewayId)
         throws ValidationException, AuthenticationException, AccessDeniedException {
-        if (StringUtils.isBlank(gatewayId)) {
-            throw new ValidationException("Token id is missing!");
-        }
-
-        Optional<GatewayEntity> gatewayEntity = gatewayRepository.findById(gatewayId);
-        if (gatewayEntity.isEmpty()) {
-            throw new ValidationException("Gateway not found!");
-        }
-
-        if (!AuthoritiesUtil.canManageGateway(gatewayEntity.get())) {
-            throw new AccessDeniedException("Current user can't manage gateway " + gatewayId);
-        }
+        GatewayEntity gateway = getGatewayWithValidation(gatewayId);
 
         AuthorizedUser user = (AuthorizedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         AuthorizedUser authorizedUser = AuthorizedUser.build(
             TokenType.GATEWAY,
             user.getUser(),
             user.getAuthorities(),
-            gatewayEntity.get()
+            gateway
         );
-        String token = generateToken(authorizedUser);
+        String token = generateTokenIfNeedTo(authorizedUser);
 
-        log.warn("Sending gateway login event");
-        applicationEventPublisher.publishEvent(new GatewayLoginEvent(this, gatewayEntity.get()));
+        try {
+            log.warn("Trying to publish gateway login event");
+            applicationEventPublisher.publishEvent(new GatewayLoginEvent(this, gateway));
+        } catch (Exception e) {
+            log.error("Failed to publish gateway login event", e);
+        }
 
         return token;
     }
@@ -95,7 +98,95 @@ public class AuthServiceImpl implements AuthService {
         return authorizedUser;
     }
 
+    @Override
+    public void logout() throws AuthenticationException {
+        removeTokenFromRedis(AuthorisationUtils.getAuthorizedUser());
+    }
+
+    @Override
+    public void logoutGateway(String gatewayId)
+        throws ValidationException, AuthenticationException, AccessDeniedException {
+        GatewayEntity gateway = getGatewayWithValidation(gatewayId);
+        AuthorizedUser authorizedUser = AuthorisationUtils.getAuthorizedUser();
+        removeTokenFromRedis(authorizedUser.getUser(), gateway);
+
+        try {
+            log.warn("Trying to publish gateway logout event");
+            applicationEventPublisher.publishEvent(new GatewayLogoutEvent(this, gateway));
+        } catch (Exception e) {
+            log.error("Failed to publish gateway login event", e);
+        }
+    }
+
+    private String generateTokenIfNeedTo(AuthorizedUser authorizedUser) {
+        String token = getTokenFromRedis(authorizedUser);
+        if (StringUtils.isNotBlank(token)) {
+            log.info("Got active token from redis for authorized user [{}], reusing", authorizedUser);
+            return token;
+        }
+
+        log.info("Generating new token for authorized user [{}]", authorizedUser);
+        token = jwtTokenUtil.doGenerateToken(
+            authorizedUser.getTokenType().getName(),
+            authorizedUser.toClaims(),
+            tokenTimeToLive
+        );
+        saveTokenInRedis(authorizedUser, token);
+        return token;
+    }
+
+    private void saveTokenInRedis(AuthorizedUser authorizedUser, String token) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            String key = buildRedisKey(authorizedUser.getUser(), authorizedUser.getGateway());
+            jedis.setex(key, tokenTimeToLive, token);
+            log.info("Saved authorization {} in redis with key [{}] (ttl {})", authorizedUser, key, tokenTimeToLive);
+        }
+    }
+
+    private String getTokenFromRedis(AuthorizedUser authorizedUser) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            String key = buildRedisKey(authorizedUser.getUser(), authorizedUser.getGateway());
+            log.info("Trying to get token from redis for authorized user [{}] by key {}", authorizedUser, key);
+            return jedis.get(key);
+        }
+    }
+
+    private void removeTokenFromRedis(AuthorizedUser authorizedUser) {
+        removeTokenFromRedis(authorizedUser.getUser(), authorizedUser.getGateway());
+    }
+
+    private void removeTokenFromRedis(UserEntity user, GatewayEntity gateway) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            String key = buildRedisKey(user, gateway);
+            log.info("User [{}] removed token from redis by key [{}]", user, key);
+            jedis.del(key);
+        }
+    }
+
+    private GatewayEntity getGatewayWithValidation(String gatewayId)
+        throws ValidationException, AccessDeniedException, AuthenticationException {
+        if (StringUtils.isBlank(gatewayId)) {
+            throw new ValidationException("Gateway id is missing!");
+        }
+
+        Optional<GatewayEntity> gatewayEntity = gatewayRepository.findById(gatewayId);
+        if (gatewayEntity.isEmpty()) {
+            throw new ValidationException("Gateway not found!");
+        }
+
+        if (!AuthorisationUtils.canManageGateway(gatewayEntity.get())) {
+            throw new AccessDeniedException("Current user can't manage gateway " + gatewayId);
+        }
+        return gatewayEntity.get();
+    }
+
+
     private void checkExistence(AuthorizedUser authorizedUser) throws AccessDeniedException {
+        if (StringUtils.isBlank(getTokenFromRedis(authorizedUser))) {
+            throw new AccessDeniedException("Not valid token");
+        }
+
+        // is it really necessary?
         if (authorizedUser.getUser() == null) {
             log.error("Missing user in token");
             throw new AccessDeniedException();
@@ -115,10 +206,18 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-    private String generateToken(AuthorizedUser authorizedUser) {
-        return jwtTokenUtil.doGenerateToken(
-            authorizedUser.getTokenType().getName(),
-            authorizedUser.toClaims()
-        );
+    private String buildRedisKey(UserEntity user, GatewayEntity gateway) {
+        StringBuilder builder = new StringBuilder();
+        builder
+            .append("usr_")
+            .append(user.getId())
+            .append("_")
+            .append(user.getLogin());
+
+        if (gateway != null) {
+            builder.append("_gtw_").append(gateway.getId());
+        }
+
+        return builder.toString();
     }
 }
