@@ -48,6 +48,9 @@ services:
       BROKER_HOST: rabbitmq
       BROKER_USER: ${BROKER_USER}
       BROKER_PASSWORD: ${BROKER_PASSWORD}
+      REDIS_HOST: token-cache
+      REDIS_PORT: ${REDIS_PORT}
+      JWT_TOKEN_TTL: 3600
       REQUESTS_LIMIT: 10
   rabbitmq:
     container_name: rabbitmq
