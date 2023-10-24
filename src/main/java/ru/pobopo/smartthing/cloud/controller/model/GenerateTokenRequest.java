@@ -5,4 +5,5 @@ import lombok.Data;
 @Data
 public class GenerateTokenRequest {
     private String gatewayId;
+    private int days;
 }

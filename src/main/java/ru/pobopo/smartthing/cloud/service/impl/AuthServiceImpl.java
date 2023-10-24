@@ -58,11 +58,11 @@ public class AuthServiceImpl implements AuthService {
         UserDetails userDetails = (UserDetails) auth.getPrincipal();
         UserEntity user = userRepository.findByLogin(userDetails.getUsername());
         AuthorizedUser authorizedUser = AuthorizedUser.build(TokenType.USER, user, userDetails.getAuthorities());
-        return generateTokenIfNeedTo(authorizedUser);
+        return generateTokenIfNeedTo(authorizedUser, tokenTimeToLive);
     }
 
     @Override
-    public String authGateway(String gatewayId)
+    public String authGateway(String gatewayId, int days)
         throws ValidationException, AuthenticationException, AccessDeniedException {
         GatewayEntity gateway = getGatewayWithValidation(gatewayId);
 
@@ -73,7 +73,9 @@ public class AuthServiceImpl implements AuthService {
             user.getAuthorities(),
             gateway
         );
-        String token = generateTokenIfNeedTo(authorizedUser);
+        long ttl = (long) days * 24 * 3600;
+        String token = generateTokenIfNeedTo(authorizedUser, ttl);
+        log.info("Authorized user [{}] generated token for gateway [{}] for {} days", authorizedUser, gatewayId, days);
 
         try {
             log.warn("Trying to publish gateway login event");
@@ -118,7 +120,7 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-    private String generateTokenIfNeedTo(AuthorizedUser authorizedUser) {
+    private String generateTokenIfNeedTo(AuthorizedUser authorizedUser, long ttl) {
         String token = getTokenFromRedis(authorizedUser);
         if (StringUtils.isNotBlank(token)) {
             log.info("Got active token from redis for authorized user [{}], reusing", authorizedUser);
@@ -129,16 +131,16 @@ public class AuthServiceImpl implements AuthService {
         token = jwtTokenUtil.doGenerateToken(
             authorizedUser.getTokenType().getName(),
             authorizedUser.toClaims(),
-            tokenTimeToLive
+            ttl
         );
-        saveTokenInRedis(authorizedUser, token);
+        saveTokenInRedis(authorizedUser, token, ttl);
         return token;
     }
 
-    private void saveTokenInRedis(AuthorizedUser authorizedUser, String token) {
+    private void saveTokenInRedis(AuthorizedUser authorizedUser, String token, long ttl) {
         try (Jedis jedis = jedisPool.getResource()) {
             String key = buildRedisKey(authorizedUser.getUser(), authorizedUser.getGateway());
-            jedis.setex(key, tokenTimeToLive, token);
+            jedis.setex(key, ttl, token);
             log.info("Saved authorization {} in redis with key [{}] (ttl {})", authorizedUser, key, tokenTimeToLive);
         }
     }

@@ -10,7 +10,7 @@ import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
 @Component
 public interface AuthService {
     String authUser(Authentication auth);
-    String authGateway(String gatewayId) throws ValidationException, AuthenticationException, AccessDeniedException;
+    String authGateway(String gatewayId, int days) throws ValidationException, AuthenticationException, AccessDeniedException;
     AuthorizedUser validateToken(String token) throws AccessDeniedException;
 
     void logout() throws AuthenticationException;
