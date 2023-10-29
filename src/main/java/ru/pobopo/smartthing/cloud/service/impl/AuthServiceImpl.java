@@ -75,7 +75,12 @@ public class AuthServiceImpl implements AuthService {
         );
         long ttl = (long) days * 24 * 3600;
         String token = generateTokenIfNeedTo(authorizedUser, ttl);
-        log.info("Authorized user [{}] generated token for gateway [{}] for {} days", authorizedUser, gatewayId, days);
+        log.info(
+                "Authorized user [{}] generated token for gateway [{}] for {} days",
+                authorizedUser,
+                gatewayId,
+                days > 0 ? days : "[inf]"
+        );
 
         try {
             log.warn("Trying to publish gateway login event");
@@ -141,7 +146,11 @@ public class AuthServiceImpl implements AuthService {
     private void saveTokenInRedis(AuthorizedUser authorizedUser, String token, long ttl) {
         try (Jedis jedis = jedisPool.getResource()) {
             String key = buildRedisKey(authorizedUser.getUser(), authorizedUser.getGateway());
-            jedis.setex(key, ttl, token);
+            if (ttl > 0) {
+                jedis.setex(key, ttl, token);
+            } else {
+                jedis.set(key, token);
+            }
             log.info("Saved authorization {} in redis with key [{}] (ttl {})", authorizedUser, key, tokenTimeToLive);
         }
     }

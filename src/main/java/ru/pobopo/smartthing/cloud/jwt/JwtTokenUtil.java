@@ -1,9 +1,6 @@
 package ru.pobopo.smartthing.cloud.jwt;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
 import java.util.Date;
@@ -57,16 +54,19 @@ public class JwtTokenUtil {
     //check if the token has expired
     public boolean isTokenExpired(String token) {
         final Date expiration = getExpirationDateFromToken(token);
-        return expiration.before(new Date());
+        return expiration != null && expiration.before(new Date());
     }
     // ttl - seconds
     public String doGenerateToken(String subject, Map<String, Object> claims, long ttl) {
-        return Jwts.builder()
+         JwtBuilder builder = Jwts.builder()
             .setClaims(claims)
             .setSubject(subject)
             .setIssuedAt(new Date(System.currentTimeMillis()))
-            .setExpiration(new Date(System.currentTimeMillis() + ttl * 1000))
-            .signWith(key, SignatureAlgorithm.HS512)
-            .compact();
+            .signWith(key, SignatureAlgorithm.HS512);
+
+        if (ttl > 0) {
+            builder.setExpiration(new Date(System.currentTimeMillis() + ttl * 1000));
+        }
+        return builder.compact();
     }
 }
