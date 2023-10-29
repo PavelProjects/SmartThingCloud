@@ -25,6 +25,7 @@ import ru.pobopo.smartthing.cloud.event.GatewayLogoutEvent;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.BrokerException;
 import ru.pobopo.smartthing.cloud.rabbitmq.DeviceRequestMessage;
+import ru.pobopo.smartthing.cloud.rabbitmq.GatewayCommand;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.repository.GatewayRequestRepository;
 import ru.pobopo.smartthing.cloud.repository.UserRepository;
@@ -164,7 +165,14 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
         if (event.getGateway() == null) {
             log.error("There is no gateway in event!");
         }
-        log.warn("Gateway's token logout, removing queue response listener and queues.");
+
+        try {
+            log.info("Trying to send logout event to [{}]", event.getGateway());
+            sendMessage(event.getGateway(), new GatewayCommand("logout", null));
+        } catch (Exception exception) {
+            log.error("Failed to send logout message: {}", exception.getMessage());
+        }
+        log.warn("Removing queue response listener and queues for gateway [{}]", event.getGateway());
         removeResponseListener(event.getGateway());
     }
 

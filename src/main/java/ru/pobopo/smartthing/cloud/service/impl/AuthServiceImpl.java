@@ -101,7 +101,7 @@ public class AuthServiceImpl implements AuthService {
             throw new AccessDeniedException("Token expired!");
         }
         AuthorizedUser authorizedUser = AuthorizedUser.fromClaims(jwtTokenUtil.getAllClaimsFromToken(token));
-        checkExistence(authorizedUser);
+        checkExistence(token ,authorizedUser);
         log.debug("Authorized user: {}", authorizedUser);
         return authorizedUser;
     }
@@ -193,8 +193,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
 
-    private void checkExistence(AuthorizedUser authorizedUser) throws AccessDeniedException {
-        if (StringUtils.isBlank(getTokenFromRedis(authorizedUser))) {
+    private void checkExistence(String token, AuthorizedUser authorizedUser) throws AccessDeniedException {
+        if (!StringUtils.equals(token, getTokenFromRedis(authorizedUser))) {
             throw new AccessDeniedException("Not valid token");
         }
 
