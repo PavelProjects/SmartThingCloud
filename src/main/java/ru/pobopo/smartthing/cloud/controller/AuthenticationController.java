@@ -60,7 +60,7 @@ public class AuthenticationController {
     @PostMapping("/gateway")
     public TokenResponse authGateway(@RequestBody GenerateTokenRequest request)
         throws ValidationException, AuthenticationException, AccessDeniedException {
-        return new TokenResponse(authService.authGateway(request.getGatewayId()));
+        return new TokenResponse(authService.authGateway(request.getGatewayId(), request.getDays()));
     }
 
     @PostMapping("/user/logout")

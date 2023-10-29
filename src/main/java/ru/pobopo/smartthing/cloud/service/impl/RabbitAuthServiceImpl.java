@@ -80,7 +80,20 @@ public class RabbitAuthServiceImpl implements RabbitAuthService {
         Optional<GatewayEntity> gateway = gatewayRepository.findById(check.getUsername());
         // todo resource=exchange, name=amq.default, permission=write -> allow
         // (resource=queue, name=test_gateway_123, permission=read) -> check gateway
-        return gateway.isPresent() ? ALLOW : DENY;
+
+        if (gateway.isEmpty()) {
+            return DENY;
+        }
+
+        if (StringUtils.equals(check.getResource(), "exchange")) {
+            return ALLOW;
+        }
+
+        if (StringUtils.equals(check.getResource(), "queue") && haveAccess(check, gateway.get())) {
+            return ALLOW;
+        }
+
+        return DENY;
     }
 
     @Override
@@ -94,5 +107,17 @@ public class RabbitAuthServiceImpl implements RabbitAuthService {
 
     private boolean isAdmin(String username) {
         return StringUtils.equals(creditsHolder.getLogin(), username);
+    }
+
+    private boolean haveAccess(ResourceCheck check, GatewayEntity gateway) {
+        switch (check.getPermission()) {
+            case "read":
+                return StringUtils.equals(check.getName(), gateway.getQueueIn());
+            case "write":
+                return  StringUtils.equals(check.getName(), gateway.getQueueOut());
+            default:
+                log.info("Unknown permission: {}", check.getPermission());
+                return false;
+        }
     }
 }

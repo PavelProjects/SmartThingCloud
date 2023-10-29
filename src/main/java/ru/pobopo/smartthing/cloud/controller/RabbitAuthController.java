@@ -31,19 +31,19 @@ public class RabbitAuthController {
 
     @PostMapping("vhost")
     public String vhost(BasicCheck check) {
-        log.debug("Checking vhost access with {}", check);
+        log.debug("Checking vhost access: {}", check);
         return authService.authVhost(check);
     }
 
     @PostMapping("resource")
     public String resource(ResourceCheck check) {
-        log.debug("Checking resource access with {}", check);
+        log.debug("Checking resource access: {}", check);
         return authService.authResource(check);
     }
 
     @PostMapping("topic")
     public String topic(TopicCheck check) {
-        log.debug("Checking topic access with {}", check);
+        log.debug("Checking topic access: {}", check);
         return authService.authTopic(check);
     }
 }

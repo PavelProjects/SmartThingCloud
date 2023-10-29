@@ -97,6 +97,7 @@ public class AuthServiceImpl implements AuthService {
         }
         AuthorizedUser authorizedUser = AuthorizedUser.fromClaims(jwtTokenUtil.getAllClaimsFromToken(token));
         checkExistence(authorizedUser);
+        log.debug("Authorized user: {}", authorizedUser);
         return authorizedUser;
     }
 
