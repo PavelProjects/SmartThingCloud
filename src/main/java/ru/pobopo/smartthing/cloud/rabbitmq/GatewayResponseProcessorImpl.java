@@ -1,4 +1,4 @@
-package ru.pobopo.smartthing.cloud.service.impl;
+package ru.pobopo.smartthing.cloud.rabbitmq;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -8,13 +8,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-import ru.pobopo.smartthing.cloud.dto.GatewayRequestDto;
 import ru.pobopo.smartthing.cloud.entity.GatewayRequestEntity;
 import ru.pobopo.smartthing.cloud.mapper.GatewayRequestMapper;
-import ru.pobopo.smartthing.cloud.rabbitmq.MessageResponse;
 import ru.pobopo.smartthing.cloud.repository.GatewayRequestRepository;
-import ru.pobopo.smartthing.cloud.service.GatewayResponseProcessor;
 
 @Component
 @Slf4j

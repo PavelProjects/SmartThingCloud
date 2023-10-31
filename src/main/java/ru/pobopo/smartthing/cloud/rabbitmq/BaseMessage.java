@@ -7,4 +7,5 @@ import lombok.ToString;
 @ToString
 public class BaseMessage {
     private String requestId;
+    private boolean cacheable = true;
 }

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.pobopo.smartthing.cloud.controller.model.ErrorResponse;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.BrokerException;
+import ru.pobopo.smartthing.cloud.exception.CommandNotAllowed;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 
 @Slf4j
@@ -78,6 +79,13 @@ public class ErrorHandler {
     @ExceptionHandler(BrokerException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ErrorResponse brokerException(BrokerException exception) {
+        log.warn(exception.getMessage());
+        return new ErrorResponse(exception.getMessage());
+    }
+
+    @ExceptionHandler(CommandNotAllowed.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse commandNotAllowed(CommandNotAllowed exception) {
         log.warn(exception.getMessage());
         return new ErrorResponse(exception.getMessage());
     }

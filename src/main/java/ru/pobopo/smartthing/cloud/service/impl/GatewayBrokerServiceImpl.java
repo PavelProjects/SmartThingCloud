@@ -30,7 +30,7 @@ import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.repository.GatewayRequestRepository;
 import ru.pobopo.smartthing.cloud.repository.UserRepository;
 import ru.pobopo.smartthing.cloud.service.GatewayBrokerService;
-import ru.pobopo.smartthing.cloud.service.GatewayResponseProcessor;
+import ru.pobopo.smartthing.cloud.rabbitmq.GatewayResponseProcessor;
 import ru.pobopo.smartthing.cloud.service.RabbitMqService;
 import ru.pobopo.smartthing.cloud.rabbitmq.BaseMessage;
 
@@ -117,9 +117,12 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
         requestEntity.setGateway(gateway);
         requestEntity.setUser(user);
         requestEntity.setTarget(target);
-        requestRepository.save(requestEntity);
 
-        message.setRequestId(requestEntity.getId());
+        if (message.isCacheable()) {
+            requestRepository.save(requestEntity);
+
+            message.setRequestId(requestEntity.getId());
+        }
 
         rabbitMqService.send(gateway, message);
         log.info("User {} sent request {} to {}", user, message, gateway);
@@ -168,7 +171,9 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
 
         try {
             log.info("Trying to send logout event to [{}]", event.getGateway());
-            sendMessage(event.getGateway(), new GatewayCommand("logout", null));
+            GatewayCommand command = new GatewayCommand("logout", null);
+            command.setCacheable(false);
+            sendMessage(event.getGateway(), command);
         } catch (Exception exception) {
             log.error("Failed to send logout message: {}", exception.getMessage());
         }

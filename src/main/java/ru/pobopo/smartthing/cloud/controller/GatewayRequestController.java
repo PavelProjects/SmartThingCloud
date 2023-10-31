@@ -3,6 +3,8 @@ package ru.pobopo.smartthing.cloud.controller;
 import java.util.List;
 import java.util.Objects;
 import javax.naming.AuthenticationException;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +17,7 @@ import ru.pobopo.smartthing.cloud.controller.model.SendCommandRequest;
 import ru.pobopo.smartthing.cloud.controller.model.SendDeviceRequest;
 import ru.pobopo.smartthing.cloud.dto.GatewayRequestDto;
 import ru.pobopo.smartthing.cloud.entity.GatewayRequestEntity;
+import ru.pobopo.smartthing.cloud.exception.CommandNotAllowed;
 import ru.pobopo.smartthing.cloud.mapper.GatewayRequestMapper;
 import ru.pobopo.smartthing.cloud.service.GatewayBrokerService;
 
@@ -50,6 +53,9 @@ public class GatewayRequestController {
     @PostMapping("/command")
     public GatewayRequestDto sendCommand(@RequestBody SendCommandRequest messageRequest) throws Exception {
         Objects.requireNonNull(messageRequest);
+        if (StringUtils.equals(messageRequest.getCommand(), "logout")) {
+            throw new CommandNotAllowed("Command logout not allowed");
+        }
 
         GatewayRequestEntity entity = requestService.sendMessage(
             messageRequest.getGatewayId(),

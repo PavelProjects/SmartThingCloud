@@ -1,4 +1,4 @@
-package ru.pobopo.smartthing.cloud.service;
+package ru.pobopo.smartthing.cloud.rabbitmq;
 
 import org.springframework.stereotype.Component;
 import ru.pobopo.smartthing.cloud.rabbitmq.MessageResponse;
