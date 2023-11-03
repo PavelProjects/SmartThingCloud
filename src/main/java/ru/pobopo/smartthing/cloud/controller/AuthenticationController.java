@@ -10,12 +10,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.pobopo.smartthing.cloud.controller.model.AuthRequest;
 import ru.pobopo.smartthing.cloud.controller.model.GenerateTokenRequest;
 import ru.pobopo.smartthing.cloud.controller.model.TokenResponse;
@@ -26,6 +21,7 @@ import ru.pobopo.smartthing.cloud.mapper.AuthorizedUserMapper;
 import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
 import ru.pobopo.smartthing.cloud.service.AuthService;
 
+@CrossOrigin
 @RestController
 @RequestMapping("/auth")
 public class AuthenticationController {
