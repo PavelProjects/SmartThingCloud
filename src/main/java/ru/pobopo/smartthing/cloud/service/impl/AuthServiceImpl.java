@@ -2,6 +2,8 @@ package ru.pobopo.smartthing.cloud.service.impl;
 
 import java.util.Optional;
 import javax.naming.AuthenticationException;
+import javax.servlet.http.Cookie;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +31,8 @@ import ru.pobopo.smartthing.cloud.service.AuthService;
 @Component
 @Slf4j
 public class AuthServiceImpl implements AuthService {
+    public static final String USER_COOKIE_NAME = "SMTJwt";
+
     private final UserRepository userRepository;
     private final GatewayRepository gatewayRepository;
     private final JwtTokenUtil jwtTokenUtil;
@@ -54,15 +58,28 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public String authUser(Authentication auth) {
-        UserDetails userDetails = (UserDetails) auth.getPrincipal();
+    public AuthorizedUser authorizeUser(Authentication authentication) {
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         UserEntity user = userRepository.findByLogin(userDetails.getUsername());
-        AuthorizedUser authorizedUser = AuthorizedUser.build(TokenType.USER, user, userDetails.getAuthorities());
+       return AuthorizedUser.build(TokenType.USER, user, userDetails.getAuthorities());
+    }
+
+    @Override
+    public String getUserToken(AuthorizedUser authorizedUser) {
         return generateTokenIfNeedTo(authorizedUser, tokenTimeToLive);
     }
 
     @Override
-    public String authGateway(String gatewayId, int days)
+    public Cookie getUserCookie(AuthorizedUser authorizedUser) {
+        Cookie cookie = new Cookie(USER_COOKIE_NAME, getUserToken(authorizedUser));
+        cookie.setPath("/");
+        cookie.setMaxAge((int) tokenTimeToLive);
+        cookie.setHttpOnly(true);
+        return cookie;
+    }
+
+    @Override
+    public String getGatewayToken(String gatewayId, int days)
         throws ValidationException, AuthenticationException, AccessDeniedException {
         GatewayEntity gateway = getGatewayWithValidation(gatewayId);
 

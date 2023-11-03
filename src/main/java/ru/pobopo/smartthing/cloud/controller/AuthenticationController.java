@@ -1,7 +1,10 @@
 package ru.pobopo.smartthing.cloud.controller;
 
 import javax.naming.AuthenticationException;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -40,27 +43,32 @@ public class AuthenticationController {
     }
 
     @GetMapping
-    public AuthorizedUserDto authorizedUser() {
-        AuthorizedUser authorizedUser =
-            (AuthorizedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    public AuthorizedUserDto authorizedUser(
+            @AuthenticationPrincipal AuthorizedUser authorizedUser
+    ) {
         return authorizedUserMapper.toDto(authorizedUser);
     }
 
     @PostMapping("/user")
-    public TokenResponse authUser(@RequestBody AuthRequest request) {
+    public AuthorizedUserDto authUser(
+            HttpServletResponse response,
+            @RequestBody AuthRequest request
+    ) {
         Authentication auth = authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(request.getLogin(), request.getPassword())
         );
         if (!auth.isAuthenticated()) {
             throw new BadCredentialsException("Wrong user credits");
         }
-        return new TokenResponse(authService.authUser(auth));
+        AuthorizedUser user = authService.authorizeUser(auth);
+        response.addCookie(authService.getUserCookie(user));
+        return authorizedUserMapper.toDto(user);
     }
 
     @PostMapping("/gateway")
     public TokenResponse authGateway(@RequestBody GenerateTokenRequest request)
         throws ValidationException, AuthenticationException, AccessDeniedException {
-        return new TokenResponse(authService.authGateway(request.getGatewayId(), request.getDays()));
+        return new TokenResponse(authService.getGatewayToken(request.getGatewayId(), request.getDays()));
     }
 
     @PostMapping("/user/logout")

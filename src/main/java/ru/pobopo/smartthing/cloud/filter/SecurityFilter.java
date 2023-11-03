@@ -3,6 +3,7 @@ package ru.pobopo.smartthing.cloud.filter;
 import java.io.IOException;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
@@ -14,8 +15,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.WebUtils;
 import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
 import ru.pobopo.smartthing.cloud.service.AuthService;
+
+import static ru.pobopo.smartthing.cloud.service.impl.AuthServiceImpl.USER_COOKIE_NAME;
 
 @Component
 public class SecurityFilter extends OncePerRequestFilter {
@@ -32,22 +36,21 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            String token = StringUtils.firstNonBlank(request.getHeader(USER_TOKEN_HEADER), request.getHeader(GATEWAY_TOKEN_HEADER));
-            if (StringUtils.isNotBlank(token)) {
-                try {
-                    setUserDetailsToContext(authService.validateToken(token), request);
-                } catch (Exception e) {
-                    log.error("Token validation failed: {}", e.getMessage());
-                }
+        Cookie cookie = WebUtils.getCookie(request, USER_COOKIE_NAME);
+        String token = StringUtils.firstNonBlank(
+                cookie != null ? cookie.getValue() : null,
+                request.getHeader(USER_TOKEN_HEADER),
+                request.getHeader(GATEWAY_TOKEN_HEADER)
+        );
+        if (StringUtils.isNotBlank(token)) {
+            try {
+                setUserDetailsToContext(authService.validateToken(token), request);
+            } catch (Exception e) {
+                log.error("Token validation failed: {}", e.getMessage());
             }
-        } else {
-            log.warn("Security context is already present");
         }
 
         filterChain.doFilter(request, response);
-
-        SecurityContextHolder.clearContext();
     }
 
     private void setUserDetailsToContext(AuthorizedUser authorizedUser, HttpServletRequest request) {
