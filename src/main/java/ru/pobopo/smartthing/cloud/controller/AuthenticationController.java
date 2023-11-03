@@ -21,7 +21,6 @@ import ru.pobopo.smartthing.cloud.mapper.AuthorizedUserMapper;
 import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
 import ru.pobopo.smartthing.cloud.service.AuthService;
 
-@CrossOrigin
 @RestController
 @RequestMapping("/auth")
 public class AuthenticationController {

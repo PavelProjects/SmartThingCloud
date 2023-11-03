@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
@@ -44,11 +45,11 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     public AuthServiceImpl(
-        UserRepository userRepository,
-        GatewayRepository gatewayRepository,
-        JwtTokenUtil jwtTokenUtil,
-        ApplicationEventPublisher applicationEventPublisher,
-        JedisPool jedisPool
+            UserRepository userRepository,
+            GatewayRepository gatewayRepository,
+            JwtTokenUtil jwtTokenUtil,
+            ApplicationEventPublisher applicationEventPublisher,
+            JedisPool jedisPool
     ) {
         this.userRepository = userRepository;
         this.gatewayRepository = gatewayRepository;
@@ -61,7 +62,7 @@ public class AuthServiceImpl implements AuthService {
     public AuthorizedUser authorizeUser(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         UserEntity user = userRepository.findByLogin(userDetails.getUsername());
-       return AuthorizedUser.build(TokenType.USER, user, userDetails.getAuthorities());
+        return AuthorizedUser.build(TokenType.USER, user, userDetails.getAuthorities());
     }
 
     @Override
@@ -80,15 +81,15 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public String getGatewayToken(String gatewayId, int days)
-        throws ValidationException, AuthenticationException, AccessDeniedException {
+            throws ValidationException, AuthenticationException, AccessDeniedException {
         GatewayEntity gateway = getGatewayWithValidation(gatewayId);
 
         AuthorizedUser user = (AuthorizedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         AuthorizedUser authorizedUser = AuthorizedUser.build(
-            TokenType.GATEWAY,
-            user.getUser(),
-            user.getAuthorities(),
-            gateway
+                TokenType.GATEWAY,
+                user.getUser(),
+                user.getAuthorities(),
+                gateway
         );
         long ttl = (long) days * 24 * 3600;
         String token = generateTokenIfNeedTo(authorizedUser, ttl);
@@ -118,7 +119,7 @@ public class AuthServiceImpl implements AuthService {
             throw new AccessDeniedException("Token expired!");
         }
         AuthorizedUser authorizedUser = AuthorizedUser.fromClaims(jwtTokenUtil.getAllClaimsFromToken(token));
-        checkExistence(token ,authorizedUser);
+        checkExistence(token, authorizedUser);
         log.debug("Authorized user: {}", authorizedUser);
         return authorizedUser;
     }
@@ -130,7 +131,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logoutGateway(String gatewayId)
-        throws ValidationException, AuthenticationException, AccessDeniedException {
+            throws ValidationException, AuthenticationException, AccessDeniedException {
         GatewayEntity gateway = getGatewayWithValidation(gatewayId);
         AuthorizedUser authorizedUser = AuthorisationUtils.getAuthorizedUser();
         removeTokenFromRedis(authorizedUser.getUser(), gateway);
@@ -152,9 +153,9 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("Generating new token for authorized user [{}]", authorizedUser);
         token = jwtTokenUtil.doGenerateToken(
-            authorizedUser.getTokenType().getName(),
-            authorizedUser.toClaims(),
-            ttl
+                authorizedUser.getTokenType().getName(),
+                authorizedUser.toClaims(),
+                ttl
         );
         saveTokenInRedis(authorizedUser, token, ttl);
         return token;
@@ -193,7 +194,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private GatewayEntity getGatewayWithValidation(String gatewayId)
-        throws ValidationException, AccessDeniedException, AuthenticationException {
+            throws ValidationException, AccessDeniedException, AuthenticationException {
         if (StringUtils.isBlank(gatewayId)) {
             throw new ValidationException("Gateway id is missing!");
         }
@@ -238,10 +239,10 @@ public class AuthServiceImpl implements AuthService {
     private String buildRedisKey(UserEntity user, GatewayEntity gateway) {
         StringBuilder builder = new StringBuilder();
         builder
-            .append("usr_")
-            .append(user.getId())
-            .append("_")
-            .append(user.getLogin());
+                .append("usr_")
+                .append(user.getId())
+                .append("_")
+                .append(user.getLogin());
 
         if (gateway != null) {
             builder.append("_gtw_").append(gateway.getId());
