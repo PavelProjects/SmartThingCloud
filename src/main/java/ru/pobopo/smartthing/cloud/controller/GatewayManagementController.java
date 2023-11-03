@@ -8,7 +8,15 @@ import javax.naming.AuthenticationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import ru.pobopo.smartthing.cloud.controller.model.CreateGatewayRequest;
 import ru.pobopo.smartthing.cloud.dto.GatewayShortDto;
 import ru.pobopo.smartthing.cloud.dto.GatewayDto;
@@ -19,7 +27,6 @@ import ru.pobopo.smartthing.cloud.mapper.GatewayMapper;
 import ru.pobopo.smartthing.cloud.service.GatewayService;
 import ru.pobopo.smartthing.cloud.service.RabbitMqService;
 
-@CrossOrigin
 @RestController
 @RequestMapping("/gateway/management")
 @Slf4j

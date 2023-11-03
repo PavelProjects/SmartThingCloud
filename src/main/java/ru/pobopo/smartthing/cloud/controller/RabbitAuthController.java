@@ -2,13 +2,15 @@ package ru.pobopo.smartthing.cloud.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import ru.pobopo.smartthing.cloud.controller.model.rabbitmq.BasicCheck;
 import ru.pobopo.smartthing.cloud.controller.model.rabbitmq.ResourceCheck;
 import ru.pobopo.smartthing.cloud.controller.model.rabbitmq.TopicCheck;
 import ru.pobopo.smartthing.cloud.service.RabbitAuthService;
 
-@CrossOrigin
 @RestController
 @RequestMapping("/rabbit/auth")
 @Slf4j
