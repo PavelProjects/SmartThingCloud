@@ -4,6 +4,8 @@ import javax.naming.AuthenticationException;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -61,7 +63,8 @@ public class AuthenticationController {
             throw new BadCredentialsException("Wrong user credits");
         }
         AuthorizedUser user = authService.authorizeUser(auth);
-        response.addCookie(authService.getUserCookie(user));
+        ResponseCookie responseCookie = authService.getUserCookie(user);
+        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
         return authorizedUserMapper.toDto(user);
     }
 
