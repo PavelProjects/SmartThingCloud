@@ -9,11 +9,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
@@ -71,12 +71,16 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Cookie getUserCookie(AuthorizedUser authorizedUser) {
-        Cookie cookie = new Cookie(USER_COOKIE_NAME, getUserToken(authorizedUser));
-        cookie.setPath("/");
-        cookie.setMaxAge((int) tokenTimeToLive);
-        cookie.setHttpOnly(true);
-        return cookie;
+    public ResponseCookie getUserCookie(AuthorizedUser authorizedUser) {
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(
+                        USER_COOKIE_NAME,
+                        getUserToken(authorizedUser)
+                )
+                .path("/")
+                .secure(true)
+                .maxAge(tokenTimeToLive)
+                .httpOnly(true);
+        return builder.build();
     }
 
     @Override
