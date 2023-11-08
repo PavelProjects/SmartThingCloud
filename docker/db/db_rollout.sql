@@ -44,7 +44,7 @@ create table smt_gateway (
     id char(8) primary key default getnextid(),
     creation_date timestamp with time zone not null default now(),
     name varchar(32) not null,
-    description varchar(32) not null,
+    description varchar(32),
     queue_in_name varchar(64),
     queue_out_name varchar(64)
 );

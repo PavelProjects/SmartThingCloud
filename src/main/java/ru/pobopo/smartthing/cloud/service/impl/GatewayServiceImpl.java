@@ -18,35 +18,34 @@ import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.repository.GatewayRequestRepository;
-import ru.pobopo.smartthing.cloud.repository.UserRepository;
 import ru.pobopo.smartthing.cloud.service.GatewayService;
+import ru.pobopo.smartthing.cloud.service.RabbitMqService;
 
 @Component
 @Slf4j
 public class GatewayServiceImpl implements GatewayService {
     private final GatewayRepository gatewayRepository;
     private final GatewayRequestRepository requestRepository;
-    private final UserRepository userRepository;
     private final GatewayBrokerServiceImpl brokerService;
+    private final RabbitMqService rabbitMqService;
 
     @Autowired
     public GatewayServiceImpl(
         GatewayRepository gatewayRepository,
         GatewayRequestRepository requestRepository,
-        UserRepository userRepository,
-        GatewayBrokerServiceImpl brokerService
-    ) {
+        GatewayBrokerServiceImpl brokerService,
+        RabbitMqService rabbitMqService) {
         this.gatewayRepository = gatewayRepository;
         this.requestRepository = requestRepository;
-        this.userRepository = userRepository;
         this.brokerService = brokerService;
+        this.rabbitMqService = rabbitMqService;
     }
 
     @Override
     @Transactional
     public GatewayEntity createGateway(String name, String description)
-        throws AuthenticationException, ValidationException {
-        validateName(name);
+            throws AuthenticationException, ValidationException, IOException {
+        validateName(null, name);
 
         GatewayEntity gatewayEntity = new GatewayEntity();
         gatewayEntity.setOwner(AuthorisationUtils.getCurrentUser());
@@ -61,6 +60,8 @@ public class GatewayServiceImpl implements GatewayService {
         gatewayEntity.setQueueOut(prefix + "_out");
         gatewayRepository.save(gatewayEntity);
 
+        rabbitMqService.createQueues(gatewayEntity);
+
         return gatewayEntity;
     }
 
@@ -73,7 +74,7 @@ public class GatewayServiceImpl implements GatewayService {
 
         GatewayEntity entity = getGatewayWithValidation(gatewayShortDto.getId());
 
-        validateName(gatewayShortDto.getName());
+        validateName(entity, gatewayShortDto.getName());
 
         entity.setName(gatewayShortDto.getName());
         entity.setDescription(gatewayShortDto.getDescription());
@@ -93,6 +94,9 @@ public class GatewayServiceImpl implements GatewayService {
         brokerService.removeResponseListener(entity);
 
         gatewayRepository.delete(entity);
+
+        rabbitMqService.deleteQueues(entity);
+
         log.warn("Gateway {} was deleted!", entity);
     }
 
@@ -129,11 +133,12 @@ public class GatewayServiceImpl implements GatewayService {
         return gatewayOptional.get();
     }
 
-    private void validateName(String name) throws ValidationException, AuthenticationException {
+    private void validateName(GatewayEntity old, String name) throws ValidationException, AuthenticationException {
         if (StringUtils.isBlank(name)) {
             throw new ValidationException("Gateway name can't be empty!");
         }
-        if (getUserGatewayByName(name) != null) {
+        GatewayEntity entity = getUserGatewayByName(name);
+        if (entity != null && old != null && !StringUtils.equals(old.getId(), entity.getId())) {
             throw new ValidationException("Current user already have gateway with name " + name);
         }
     }

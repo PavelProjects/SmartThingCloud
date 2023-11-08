@@ -153,14 +153,12 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
     public void addResponseListener(GatewayEntity entity) throws IOException {
         Objects.requireNonNull(entity);
 
-        rabbitMqService.createQueues(entity);
         rabbitMqService.addQueueListener(entity, responseProcessor::process);
     }
 
     @Override
     public void removeResponseListener(GatewayEntity entity) throws IOException {
         rabbitMqService.removeQueueListener(entity);
-        rabbitMqService.deleteQueues(entity);
     }
 
     @EventListener

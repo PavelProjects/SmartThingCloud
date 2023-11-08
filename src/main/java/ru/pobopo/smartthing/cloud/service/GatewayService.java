@@ -17,7 +17,7 @@ public interface GatewayService {
 
     GatewayEntity getUserGatewayByName(String name) throws AuthenticationException;
 
-    GatewayEntity createGateway(String name, String description) throws AuthenticationException, ValidationException;
+    GatewayEntity createGateway(String name, String description) throws AuthenticationException, ValidationException, IOException;
     void updateGateway(GatewayShortDto gatewayShortDto) throws ValidationException, AuthenticationException, AccessDeniedException;
     void deleteGateway(String id)
         throws AccessDeniedException, ValidationException, AuthenticationException, IOException;

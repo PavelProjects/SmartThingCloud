@@ -124,11 +124,11 @@ public class RabbitMqServiceImpl implements RabbitMqService {
 
     @Override
     public void checkIsOnline(List<GatewayDto> gateways) throws InterruptedException {
-        int size = gateways.size();
-        if (size < 1) {
+        if (gateways.isEmpty()) {
             return;
         }
 
+        int size = gateways.size();
         CountDownLatch latch = new CountDownLatch(size);
         ExecutorService executorService = Executors.newFixedThreadPool(size);
         gateways.forEach(entity ->
@@ -137,7 +137,7 @@ public class RabbitMqServiceImpl implements RabbitMqService {
                 try {
                     online = isOnline(entity);
                 } catch (IOException e) {
-                    log.error("Failed to check gateway {} availability: {}", entity, e.getMessage());
+                    log.error("Failed to check gateway {} availability: {}", entity, e.getMessage(), e);
                 }
                 entity.setOnline(online);
                 latch.countDown();
