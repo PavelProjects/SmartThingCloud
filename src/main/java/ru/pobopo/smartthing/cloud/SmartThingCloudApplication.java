@@ -4,6 +4,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
 import ru.pobopo.smartthing.cloud.service.GatewayBrokerService;
 import ru.pobopo.smartthing.cloud.service.UserService;
@@ -18,11 +19,12 @@ public class SmartThingCloudApplication {
     }
 
     @Bean
-    CommandLineRunner run(UserService userService, GatewayBrokerService gatewayMessagingService)  {
+    CommandLineRunner run(Environment environment, UserService userService, GatewayBrokerService gatewayMessagingService)  {
         return args -> {
-            userService.createUser("test_user", "1");
+            String login = environment.getProperty("admin.login", "admin");
+            String password = environment.getProperty("admin.password", "admin");
 
-            UserEntity adminUser = userService.createUser("admin", "admin");
+            UserEntity adminUser = userService.createUser(login, password);
             userService.grantUserRole(adminUser, AuthorisationUtils.ADMIN_ROLE);
 
             gatewayMessagingService.addResponseListeners();
