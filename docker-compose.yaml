@@ -37,8 +37,8 @@ services:
     ports:
       - 8080:8080
     environment:
-      LOGIN_ADMIN: nuhuh
-      LOGIN_PASSWORD: yahuh
+      ADMIN_LOGIN: nuhuh
+      ADMIN_PASSWORD: yahuh
       JWT_SECRET: U2oBc7qIgVgZgv3cSl370JQzZ4PWDYsA+PMlk4QxM0LGEH9s49/1CDHcm1F854Y0epVZaANWYhrKhe53QMpchdDOlH2ibGj1LP+6OoXcjBfh+yzUA0HYl53njiQsigK3+QOidGo11b1fkPdJ+lZgnCsRe2bhqsu48u5FXbPFyS7LeIYzj63qqfkBYT+Zc3vzIgdOpGpq9itUsNbwXafYSXBO3BEi6v0EbdIg5Qx
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME}
       SPRING_DATASOURCE_USERNAME: ${DB_USER}
