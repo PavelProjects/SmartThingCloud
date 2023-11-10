@@ -77,7 +77,6 @@ public class AuthServiceImpl implements AuthService {
                         getUserToken(authorizedUser)
                 )
                 .path("/")
-                .secure(true)
                 .maxAge(tokenTimeToLive)
                 .httpOnly(true);
         return builder.build();
