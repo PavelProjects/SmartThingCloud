@@ -141,6 +141,7 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
         log.info("Adding response listeners for gateways. Total count: {}", entities.size());
         for (GatewayEntity entity: entities) {
             if (StringUtils.isNotBlank(entity.getQueueIn()) && StringUtils.isNotBlank(entity.getQueueOut())) {
+                rabbitMqService.createQueues(entity);
                 addResponseListener(entity);
             } else {
                 log.warn("Gateway {} not authorized! Skipping response listener creation.", entity);
