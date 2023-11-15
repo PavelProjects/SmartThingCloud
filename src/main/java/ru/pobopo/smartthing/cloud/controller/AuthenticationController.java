@@ -13,11 +13,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.pobopo.smartthing.cloud.controller.model.AuthRequest;
 import ru.pobopo.smartthing.cloud.controller.model.GenerateTokenRequest;
 import ru.pobopo.smartthing.cloud.controller.model.TokenResponse;
@@ -79,8 +75,8 @@ public class AuthenticationController {
         authService.logout();
     }
 
-    @PostMapping("/gateway/logout")
-    public void gatewayLogout(@RequestBody String gatewayId) throws ValidationException, AccessDeniedException, AuthenticationException {
+    @PostMapping("/gateway/logout/{gatewayId}")
+    public void gatewayLogout(@PathVariable String gatewayId) throws ValidationException, AccessDeniedException, AuthenticationException {
         authService.logoutGateway(gatewayId);
     }
 }
