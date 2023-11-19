@@ -1,20 +1,21 @@
 package ru.pobopo.smartthing.cloud.service.impl;
 
-import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ru.pobopo.smartthing.cloud.model.TokenType;
-import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
-import ru.pobopo.smartthing.cloud.rabbitmq.RabbitCreditsHolder;
 import ru.pobopo.smartthing.cloud.controller.model.rabbitmq.BasicCheck;
 import ru.pobopo.smartthing.cloud.controller.model.rabbitmq.ResourceCheck;
 import ru.pobopo.smartthing.cloud.controller.model.rabbitmq.TopicCheck;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
+import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
+import ru.pobopo.smartthing.cloud.model.TokenType;
+import ru.pobopo.smartthing.cloud.rabbitmq.RabbitCreditsHolder;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.service.AuthService;
 import ru.pobopo.smartthing.cloud.service.RabbitAuthService;
+
+import java.util.Optional;
 
 @Component
 @Slf4j
@@ -112,9 +113,9 @@ public class RabbitAuthServiceImpl implements RabbitAuthService {
     private boolean haveAccess(ResourceCheck check, GatewayEntity gateway) {
         switch (check.getPermission()) {
             case "read":
-                return StringUtils.equals(check.getName(), gateway.getQueueIn());
+                return StringUtils.equals(check.getName(), gateway.getConfig().getQueueIn());
             case "write":
-                return  StringUtils.equals(check.getName(), gateway.getQueueOut());
+                return  StringUtils.equals(check.getName(), gateway.getConfig().getQueueOut());
             default:
                 log.info("Unknown permission: {}", check.getPermission());
                 return false;

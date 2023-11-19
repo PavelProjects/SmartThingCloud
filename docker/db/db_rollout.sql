@@ -44,9 +44,17 @@ create table smt_gateway (
     id char(8) primary key default getnextid(),
     creation_date timestamp with time zone not null default now(),
     name varchar(32) not null,
-    description varchar(32),
-    queue_in_name varchar(64),
-    queue_out_name varchar(64)
+    description varchar(32)
+);
+
+create table smt_gateway_config (
+    id char(8) primary key default getnextid(),
+    creation_date timestamp with time zone not null default now(),
+    gateway_id char(8) not null references smt_gateway(id),
+    broker_ip varchar(128) not null,
+    broker_port int not null,
+    queue_in varchar(64) not null,
+    queue_out varchar(64) not null
 );
 
 create table smt_gateway_owner (

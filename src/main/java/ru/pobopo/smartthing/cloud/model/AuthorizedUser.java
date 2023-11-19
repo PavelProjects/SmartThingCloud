@@ -24,8 +24,6 @@ public class AuthorizedUser implements Serializable {
     private final static String CLAIM_GATEWAY_ID = "gateway_id";
     private final static String CLAIM_GATEWAY_NAME = "gateway_name";
     private final static String CLAIM_GATEWAY_DESCRIPTION = "gateway_description";
-    private final static String CLAIM_GATEWAY_QUEUE_IN = "gateway_queue_in";
-    private final static String CLAIM_GATEWAY_QUEUE_OUT = "gateway_queue_out";
 
     private final TokenType tokenType;
     private final UserEntity user;
@@ -80,8 +78,6 @@ public class AuthorizedUser implements Serializable {
             gatewayEntity.setId((String) claims.get(CLAIM_GATEWAY_ID));
             gatewayEntity.setName((String) claims.get(CLAIM_GATEWAY_NAME));
             gatewayEntity.setDescription((String) claims.get(CLAIM_GATEWAY_DESCRIPTION));
-            gatewayEntity.setQueueIn((String) claims.get(CLAIM_GATEWAY_QUEUE_IN));
-            gatewayEntity.setQueueOut((String) claims.get(CLAIM_GATEWAY_QUEUE_OUT));
         }
 
         return build(
@@ -104,8 +100,6 @@ public class AuthorizedUser implements Serializable {
             claims.put(CLAIM_GATEWAY_ID, gateway.getId());
             claims.put(CLAIM_GATEWAY_NAME, gateway.getName());
             claims.put(CLAIM_GATEWAY_DESCRIPTION, gateway.getDescription());
-            claims.put(CLAIM_GATEWAY_QUEUE_IN, gateway.getQueueIn());
-            claims.put(CLAIM_GATEWAY_QUEUE_OUT, gateway.getQueueOut());
         }
 
         return claims;

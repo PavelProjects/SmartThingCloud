@@ -1,11 +1,5 @@
 package ru.pobopo.smartthing.cloud.service.impl;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import javax.naming.AuthenticationException;
-import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,13 +7,22 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.webjars.NotFoundException;
 import ru.pobopo.smartthing.cloud.dto.GatewayShortDto;
+import ru.pobopo.smartthing.cloud.entity.GatewayConfigEntity;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
+import ru.pobopo.smartthing.cloud.repository.GatewayConfigRepository;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.repository.GatewayRequestRepository;
 import ru.pobopo.smartthing.cloud.service.GatewayService;
 import ru.pobopo.smartthing.cloud.service.RabbitMqService;
+
+import javax.naming.AuthenticationException;
+import javax.validation.constraints.NotNull;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Component
 @Slf4j
@@ -27,24 +30,35 @@ public class GatewayServiceImpl implements GatewayService {
     private final GatewayRepository gatewayRepository;
     private final GatewayRequestRepository requestRepository;
     private final GatewayBrokerServiceImpl brokerService;
+    private final GatewayConfigRepository configRepository;
     private final RabbitMqService rabbitMqService;
 
     @Autowired
     public GatewayServiceImpl(
-        GatewayRepository gatewayRepository,
-        GatewayRequestRepository requestRepository,
-        GatewayBrokerServiceImpl brokerService,
-        RabbitMqService rabbitMqService) {
+            GatewayRepository gatewayRepository,
+            GatewayRequestRepository requestRepository,
+            GatewayBrokerServiceImpl brokerService,
+            GatewayConfigRepository configRepository, RabbitMqService rabbitMqService) {
         this.gatewayRepository = gatewayRepository;
         this.requestRepository = requestRepository;
         this.brokerService = brokerService;
+        this.configRepository = configRepository;
         this.rabbitMqService = rabbitMqService;
     }
 
     @Override
-    @Transactional
     public GatewayEntity createGateway(String name, String description)
             throws AuthenticationException, ValidationException, IOException {
+
+        GatewayEntity gatewayEntity = createGatewayAndConfig(name, description);
+
+        rabbitMqService.createQueues(gatewayEntity);
+
+        return gatewayEntity;
+    }
+
+    @Transactional
+    private GatewayEntity createGatewayAndConfig(String name, String description) throws ValidationException, AuthenticationException {
         validateName(null, name);
 
         GatewayEntity gatewayEntity = new GatewayEntity();
@@ -55,12 +69,8 @@ public class GatewayServiceImpl implements GatewayService {
 
         gatewayRepository.save(gatewayEntity);
 
-        String prefix = gatewayEntity.getId() + "_" + gatewayEntity.getName();
-        gatewayEntity.setQueueIn(prefix + "_in");
-        gatewayEntity.setQueueOut(prefix + "_out");
-        gatewayRepository.save(gatewayEntity);
-
-        rabbitMqService.createQueues(gatewayEntity);
+        GatewayConfigEntity configEntity = createGatewayConfig(gatewayEntity);
+        gatewayEntity.setConfig(configEntity);
 
         return gatewayEntity;
     }
@@ -113,6 +123,35 @@ public class GatewayServiceImpl implements GatewayService {
     @Override
     public GatewayEntity getGateway(String id) {
         return gatewayRepository.findById(id).get();
+    }
+
+    @Override
+    public GatewayConfigEntity getConfig(String gatewayId) {
+        return configRepository.findByGatewayId(gatewayId);
+    }
+
+    private GatewayConfigEntity createGatewayConfig(GatewayEntity gateway) {
+        String host = rabbitMqService.getBrokeHost();
+        int port = rabbitMqService.getBrokePort();
+
+        if (StringUtils.isBlank(host)) {
+            throw new RuntimeException("Message broker address is null!");
+        }
+
+        String prefix = gateway.getId() + "_" + gateway.getName();
+
+        GatewayConfigEntity configEntity = new GatewayConfigEntity();
+        configEntity.setBrokerIp(host);
+        configEntity.setBrokerPort(port);
+        configEntity.setGateway(gateway);
+        configEntity.setQueueIn(prefix + "_in");
+        configEntity.setQueueOut(prefix + "_out");
+
+        configRepository.save(configEntity);
+
+        log.info("Created config for gateway [id={}] : {}", gateway.getId(), configEntity);
+
+        return configEntity;
     }
 
     @NotNull

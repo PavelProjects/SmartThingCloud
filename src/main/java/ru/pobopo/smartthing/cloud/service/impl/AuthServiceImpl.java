@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,8 +13,6 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
-import ru.pobopo.smartthing.cloud.event.GatewayLoginEvent;
-import ru.pobopo.smartthing.cloud.event.GatewayLogoutEvent;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.jwt.JwtTokenUtil;
@@ -24,6 +21,7 @@ import ru.pobopo.smartthing.cloud.model.TokenType;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.repository.UserRepository;
 import ru.pobopo.smartthing.cloud.service.AuthService;
+import ru.pobopo.smartthing.cloud.service.GatewayBrokerService;
 
 import javax.naming.AuthenticationException;
 import java.util.List;
@@ -37,8 +35,8 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final GatewayRepository gatewayRepository;
     private final JwtTokenUtil jwtTokenUtil;
-    private final ApplicationEventPublisher applicationEventPublisher;
     private final JedisPool jedisPool;
+    private final GatewayBrokerService gatewayBrokerService;
 
     @Value("${jwt.token.ttl}")
     private long tokenTimeToLive;
@@ -48,14 +46,13 @@ public class AuthServiceImpl implements AuthService {
             UserRepository userRepository,
             GatewayRepository gatewayRepository,
             JwtTokenUtil jwtTokenUtil,
-            ApplicationEventPublisher applicationEventPublisher,
-            JedisPool jedisPool
-    ) {
+            JedisPool jedisPool,
+            GatewayBrokerService gatewayBrokerService) {
         this.userRepository = userRepository;
         this.gatewayRepository = gatewayRepository;
         this.jwtTokenUtil = jwtTokenUtil;
-        this.applicationEventPublisher = applicationEventPublisher;
         this.jedisPool = jedisPool;
+        this.gatewayBrokerService = gatewayBrokerService;
     }
 
     @Override
@@ -104,10 +101,9 @@ public class AuthServiceImpl implements AuthService {
         );
 
         try {
-            log.warn("Trying to publish gateway login event");
-            applicationEventPublisher.publishEvent(new GatewayLoginEvent(this, gateway));
-        } catch (Exception e) {
-            log.error("Failed to publish gateway login event", e);
+            gatewayBrokerService.addResponseListener(gateway);
+        } catch (Exception exception) {
+            throw new RuntimeException("Failed to add queue response listener", exception);
         }
 
         return token;
@@ -148,7 +144,7 @@ public class AuthServiceImpl implements AuthService {
 
         try {
             log.warn("Trying to publish gateway logout event");
-            applicationEventPublisher.publishEvent(new GatewayLogoutEvent(this, gateway));
+            gatewayBrokerService.gatewayLogout(gateway);
         } catch (Exception e) {
             log.error("Failed to publish gateway login event", e);
         }

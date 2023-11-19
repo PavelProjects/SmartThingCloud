@@ -5,6 +5,22 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
+import ru.pobopo.smartthing.cloud.dto.GatewayDto;
+import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
+import ru.pobopo.smartthing.cloud.exception.UnsupportedMessageClassException;
+import ru.pobopo.smartthing.cloud.exception.ValidationException;
+import ru.pobopo.smartthing.cloud.rabbitmq.*;
+import ru.pobopo.smartthing.cloud.service.RabbitMqService;
+
+import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
@@ -15,25 +31,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
-import javax.annotation.PreDestroy;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Component;
-import ru.pobopo.smartthing.cloud.dto.GatewayDto;
-import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
-import ru.pobopo.smartthing.cloud.exception.UnsupportedMessageClassException;
-import ru.pobopo.smartthing.cloud.exception.ValidationException;
-import ru.pobopo.smartthing.cloud.rabbitmq.MessageConsumer;
-import ru.pobopo.smartthing.cloud.rabbitmq.MessageResponse;
-import ru.pobopo.smartthing.cloud.service.RabbitMqService;
-import ru.pobopo.smartthing.cloud.rabbitmq.BaseMessage;
-import ru.pobopo.smartthing.cloud.rabbitmq.DeviceRequestMessage;
-import ru.pobopo.smartthing.cloud.rabbitmq.GatewayCommand;
-import ru.pobopo.smartthing.cloud.rabbitmq.GatewayMessageType;
 
 @Component
 @Slf4j
@@ -44,9 +41,16 @@ public class RabbitMqServiceImpl implements RabbitMqService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final Set<String> consumersTags = new HashSet<>();
 
+    @Value("${BROKER_HOST_GLOBAL}")
+    private String brokerHost;
+
+    @Value("${BROKER_PORT}")
+    private int brokerPort;
+
     @Autowired
     public RabbitMqServiceImpl(ConnectionFactory connectionFactory) {
         this.connectionFactory = connectionFactory;
+        log.info("RabbitMq global host and port: {}:{}", brokerHost, brokerPort);
     }
 
     @EventListener
@@ -61,16 +65,27 @@ public class RabbitMqServiceImpl implements RabbitMqService {
     }
 
     @Override
+    public String getBrokeHost() {
+        return brokerHost;
+    }
+
+    @Override
+    public int getBrokePort() {
+        return brokerPort;
+
+    }
+
+    @Override
     public void createQueues(GatewayEntity entity) throws IOException {
-        channel.queueDeclare(entity.getQueueIn(), false, false, false, null);
-        channel.queueDeclare(entity.getQueueOut(), false, false, false, null);
+        channel.queueDeclare(entity.getConfig().getQueueIn(), false, false, false, null);
+        channel.queueDeclare(entity.getConfig().getQueueOut(), false, false, false, null);
         log.info("Created queues for {}", entity);
     }
 
     @Override
     public void deleteQueues(GatewayEntity entity) throws IOException {
-        channel.queueDelete(entity.getQueueIn());
-        channel.queueDelete(entity.getQueueOut());
+        channel.queueDelete(entity.getConfig().getQueueIn());
+        channel.queueDelete(entity.getConfig().getQueueOut());
         log.info("Removed queues for {}", entity);
     }
 
@@ -82,7 +97,7 @@ public class RabbitMqServiceImpl implements RabbitMqService {
             return;
         }
         channel.basicConsume(
-            entity.getQueueOut(),
+            entity.getConfig().getQueueOut(),
             false,
             consumerTag,
             new MessageConsumer(channel, consumer)
@@ -101,7 +116,7 @@ public class RabbitMqServiceImpl implements RabbitMqService {
     public <T extends BaseMessage> String send(GatewayEntity entity, T message)
         throws IOException, UnsupportedMessageClassException, ValidationException {
         Objects.requireNonNull(entity, "Gateway entity is missing!");
-        String queue = entity.getQueueIn();
+        String queue = entity.getConfig().getQueueIn();
 
         if (StringUtils.isBlank(queue)) {
             throw new ValidationException("Queue in name are blank!");
@@ -119,7 +134,8 @@ public class RabbitMqServiceImpl implements RabbitMqService {
 
     @Override
     public boolean isOnline(GatewayDto gatewayDto) throws IOException {
-        return channel.consumerCount(gatewayDto.getQueueIn()) > 0;
+//        return channel.consumerCount(gatewayDto.getConfig().getQueueIn()) > 0;
+        return false; //todo
     }
 
     @Override

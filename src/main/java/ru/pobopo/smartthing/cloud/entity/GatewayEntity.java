@@ -1,25 +1,16 @@
 package ru.pobopo.smartthing.cloud.entity;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
+
+import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = GatewayEntity.TYPE)
-@Data
+@Getter
+@Setter
 public class GatewayEntity {
     public static final String TYPE = "smt_gateway";
 
@@ -35,12 +26,6 @@ public class GatewayEntity {
     @Column
     private String description;
 
-    @Column(name = "queue_in_name")
-    private String queueIn;
-
-    @Column(name = "queue_out_name")
-    private String queueOut;
-
     @Column(name = "creation_date")
     private LocalDateTime creationDate;
 
@@ -52,4 +37,17 @@ public class GatewayEntity {
         inverseJoinColumns = @JoinColumn(
             name = "user_id", referencedColumnName = "id"))
     private UserEntity owner;
+
+    @OneToOne(fetch = FetchType.EAGER, mappedBy = "gateway")
+    private GatewayConfigEntity config;
+
+    @Override
+    public String toString() {
+        return String.format(
+                "(GatewayEntity id=%s, name=%s, description=%s)",
+                id,
+                name,
+                description
+        );
+    }
 }
