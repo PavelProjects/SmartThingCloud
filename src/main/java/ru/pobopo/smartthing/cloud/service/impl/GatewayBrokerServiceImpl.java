@@ -127,18 +127,22 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
     @Override
     public void addResponseListeners() throws IOException {
         List<GatewayEntity> entities = gatewayRepository.findAll();
-        if (entities.size() == 0) {
+        if (entities.isEmpty()) {
             log.info("No gateways were found -> skipping response listeners creation");
             return;
         }
 
         log.info("Adding response listeners for gateways. Total count: {}", entities.size());
         for (GatewayEntity entity: entities) {
-            if (StringUtils.isNotBlank(entity.getConfig().getQueueIn()) && StringUtils.isNotBlank(entity.getConfig().getQueueOut())) {
-                rabbitMqService.createQueues(entity);
-                addResponseListener(entity);
-            } else {
-                log.warn("Gateway {} not authorized! Skipping response listener creation.", entity);
+            try {
+                if (entity.getConfig() == null) {
+                    rabbitMqService.createQueues(entity);
+                    addResponseListener(entity);
+                } else {
+                    log.warn("Gateway {} has not config! Skipping.", entity);
+                }
+            } catch (Exception exception) {
+                log.error("Failed to add response listener for gateway {}", entity, exception);
             }
         }
         log.info("Response listeners added.");
