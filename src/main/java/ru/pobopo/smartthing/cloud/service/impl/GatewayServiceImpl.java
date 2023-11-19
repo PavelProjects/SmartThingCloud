@@ -121,8 +121,8 @@ public class GatewayServiceImpl implements GatewayService {
     }
 
     @Override
-    public GatewayEntity getGateway(String id) {
-        return gatewayRepository.findById(id).get();
+    public GatewayEntity getGateway(String id) throws AccessDeniedException, ValidationException, AuthenticationException {
+        return getGatewayWithValidation(id);
     }
 
     @Override

@@ -13,7 +13,7 @@ import java.util.List;
 
 @Component
 public interface GatewayService {
-    GatewayEntity getGateway(String id);
+    GatewayEntity getGateway(String id) throws AccessDeniedException, ValidationException, AuthenticationException;
     List<GatewayEntity> getUserGateways() throws AuthenticationException, InterruptedException;
 
     GatewayEntity getUserGatewayByName(String name) throws AuthenticationException;

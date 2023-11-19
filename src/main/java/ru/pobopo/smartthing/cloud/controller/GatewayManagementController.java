@@ -39,10 +39,10 @@ public class GatewayManagementController {
 
     @Autowired
     public GatewayManagementController(
-        GatewayService gatewayService,
-        RabbitMqService rabbitMqService,
-        GatewayMapper gatewayMapper,
-        GatewayConfigMapper configMapper) {
+            GatewayService gatewayService,
+            RabbitMqService rabbitMqService,
+            GatewayMapper gatewayMapper,
+            GatewayConfigMapper configMapper) {
         this.gatewayService = gatewayService;
         this.rabbitMqService = rabbitMqService;
         this.gatewayMapper = gatewayMapper;
@@ -53,7 +53,7 @@ public class GatewayManagementController {
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     public GatewayShortDto createGateway(@RequestBody CreateGatewayRequest request)
-        throws AuthenticationException, ValidationException, IOException, TimeoutException {
+            throws AuthenticationException, ValidationException, IOException, TimeoutException {
         GatewayEntity gatewayEntity = gatewayService.createGateway(request.getName(), request.getDescription());
         Objects.requireNonNull(gatewayEntity);
         return gatewayMapper.toShortDto(gatewayEntity);
@@ -62,14 +62,14 @@ public class GatewayManagementController {
     @RequiredRole(roles = USER)
     @PutMapping("/update")
     public void updateGateway(@RequestBody GatewayShortDto dto)
-        throws AccessDeniedException, ValidationException, AuthenticationException {
+            throws AccessDeniedException, ValidationException, AuthenticationException {
         gatewayService.updateGateway(dto);
     }
 
     @RequiredRole(roles = USER)
     @DeleteMapping("/delete/{id}")
     public void deleteGateway(@PathVariable String id)
-        throws AccessDeniedException, ValidationException, AuthenticationException, IOException {
+            throws AccessDeniedException, ValidationException, AuthenticationException, IOException {
         gatewayService.deleteGateway(id);
     }
 
@@ -85,7 +85,7 @@ public class GatewayManagementController {
 
     @RequiredRole(roles = USER)
     @GetMapping("/{id}")
-    public GatewayDto getById(@PathVariable String id) throws IOException {
+    public GatewayDto getById(@PathVariable String id) throws IOException, AccessDeniedException, ValidationException, AuthenticationException {
         GatewayDto dto = gatewayMapper.toDto(gatewayService.getGateway(id));
         if (dto == null) {
             return null;
@@ -96,7 +96,7 @@ public class GatewayManagementController {
 
     @RequiredRole(roles = USER)
     @GetMapping("/config/{id}")
-    public GatewayConfigDto getConfigById(@PathVariable String id) {
+    public GatewayConfigDto getConfigById(@PathVariable String id) throws AccessDeniedException, ValidationException, AuthenticationException {
         GatewayEntity gateway = gatewayService.getGateway(id);
         if (gateway == null || gateway.getConfig() == null) {
             return null;
