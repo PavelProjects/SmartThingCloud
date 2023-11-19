@@ -31,7 +31,7 @@ public class GatewayConfigEntity {
     @Column(name = "queue_out")
     private String queueOut;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "gateway_id", referencedColumnName = "id")
     private GatewayEntity gateway;
 }

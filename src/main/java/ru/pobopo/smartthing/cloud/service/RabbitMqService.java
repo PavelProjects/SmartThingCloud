@@ -1,5 +1,6 @@
 package ru.pobopo.smartthing.cloud.service;
 
+import ru.pobopo.smartthing.cloud.entity.GatewayConfigEntity;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.exception.UnsupportedMessageClassException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
@@ -13,8 +14,8 @@ public interface RabbitMqService {
     String getBrokeHost();
     int getBrokePort();
 
-    void createQueues(GatewayEntity entity) throws IOException;
-    void deleteQueues(GatewayEntity entity) throws IOException;
+    void createQueues(GatewayConfigEntity config) throws IOException;
+    void deleteQueues(GatewayConfigEntity config) throws IOException;
 
     void addQueueListener(GatewayEntity entity, Consumer<MessageResponse> consumer) throws IOException;
     void removeQueueListener(GatewayEntity entity) throws IOException;

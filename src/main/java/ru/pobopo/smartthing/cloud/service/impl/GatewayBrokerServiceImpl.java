@@ -18,6 +18,7 @@ import ru.pobopo.smartthing.cloud.rabbitmq.BaseMessage;
 import ru.pobopo.smartthing.cloud.rabbitmq.DeviceRequestMessage;
 import ru.pobopo.smartthing.cloud.rabbitmq.GatewayCommand;
 import ru.pobopo.smartthing.cloud.rabbitmq.GatewayResponseProcessor;
+import ru.pobopo.smartthing.cloud.repository.GatewayConfigRepository;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.repository.GatewayRequestRepository;
 import ru.pobopo.smartthing.cloud.service.GatewayBrokerService;
@@ -38,18 +39,20 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
     private final int requestsLimit;
     private final GatewayRequestRepository requestRepository;
     private final GatewayRepository gatewayRepository;
+    private final GatewayConfigRepository configRepository;
     private final RabbitMqService rabbitMqService;
     private final GatewayResponseProcessor responseProcessor;
 
     @Autowired
     public GatewayBrokerServiceImpl(
-        Environment environment,
-        GatewayRequestRepository requestRepository,
-        RabbitMqService rabbitMqService,
-        GatewayRepository gatewayRepository,
-        GatewayResponseProcessor responseProcessor
+            Environment environment,
+            GatewayRequestRepository requestRepository,
+            GatewayConfigRepository configRepository, RabbitMqService rabbitMqService,
+            GatewayRepository gatewayRepository,
+            GatewayResponseProcessor responseProcessor
     ) {
         this.requestRepository = requestRepository;
+        this.configRepository = configRepository;
         this.rabbitMqService = rabbitMqService;
         this.gatewayRepository = gatewayRepository;
         this.responseProcessor = responseProcessor;
@@ -125,7 +128,7 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
     }
 
     @Override
-    public void addResponseListeners() throws IOException {
+    public void addResponseListeners() {
         List<GatewayEntity> entities = gatewayRepository.findAll();
         if (entities.isEmpty()) {
             log.info("No gateways were found -> skipping response listeners creation");
@@ -135,8 +138,8 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
         log.info("Adding response listeners for gateways. Total count: {}", entities.size());
         for (GatewayEntity entity: entities) {
             try {
-                if (entity.getConfig() == null) {
-                    rabbitMqService.createQueues(entity);
+                if (entity.getConfig() != null) {
+                    rabbitMqService.createQueues(entity.getConfig());
                     addResponseListener(entity);
                 } else {
                     log.warn("Gateway {} has not config! Skipping.", entity);

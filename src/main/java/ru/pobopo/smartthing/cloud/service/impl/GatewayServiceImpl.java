@@ -52,7 +52,7 @@ public class GatewayServiceImpl implements GatewayService {
 
         GatewayEntity gatewayEntity = createGatewayAndConfig(name, description);
 
-        rabbitMqService.createQueues(gatewayEntity);
+        rabbitMqService.createQueues(gatewayEntity.getConfig());
 
         return gatewayEntity;
     }
@@ -107,7 +107,7 @@ public class GatewayServiceImpl implements GatewayService {
 
         log.warn("Deleting gateway queues and response listeners");
         brokerService.removeResponseListener(entity);
-        rabbitMqService.deleteQueues(entity);
+        rabbitMqService.deleteQueues(entity.getConfig());
 
         log.warn("Gateway {} was deleted!", entity);
     }

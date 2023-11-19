@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import ru.pobopo.smartthing.cloud.entity.GatewayConfigEntity;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.exception.UnsupportedMessageClassException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
@@ -70,17 +71,23 @@ public class RabbitMqServiceImpl implements RabbitMqService {
     }
 
     @Override
-    public void createQueues(GatewayEntity entity) throws IOException {
-        channel.queueDeclare(entity.getConfig().getQueueIn(), false, false, false, null);
-        channel.queueDeclare(entity.getConfig().getQueueOut(), false, false, false, null);
-        log.info("Created queues for {}", entity);
+    public void createQueues(GatewayConfigEntity config) throws IOException {
+        log.info("Creating queues with config {}", config);
+        if (config == null) {
+            return;
+        }
+        channel.queueDeclare(config.getQueueIn(), false, false, false, null);
+        channel.queueDeclare(config.getQueueOut(), false, false, false, null);
     }
 
     @Override
-    public void deleteQueues(GatewayEntity entity) throws IOException {
-        channel.queueDelete(entity.getConfig().getQueueIn());
-        channel.queueDelete(entity.getConfig().getQueueOut());
-        log.info("Removed queues for {}", entity);
+    public void deleteQueues(GatewayConfigEntity config) throws IOException {
+        log.info("Removing queues with config {}", config);
+        if (config == null) {
+            return;
+        }
+        channel.queueDelete(config.getQueueIn());
+        channel.queueDelete(config.getQueueOut());
     }
 
     @Override

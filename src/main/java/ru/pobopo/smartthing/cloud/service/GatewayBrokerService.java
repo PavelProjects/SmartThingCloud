@@ -17,7 +17,7 @@ public interface GatewayBrokerService {
     <T extends BaseMessage> GatewayRequestEntity sendMessage(String gatewayId, T message) throws Exception;
     <T extends BaseMessage> GatewayRequestEntity sendMessage(GatewayEntity gateway, T message) throws Exception;
 
-    void addResponseListeners() throws IOException;
+    void addResponseListeners();
     void addResponseListener(GatewayEntity entity) throws IOException;
     void removeResponseListener(GatewayEntity entity) throws IOException;
 
