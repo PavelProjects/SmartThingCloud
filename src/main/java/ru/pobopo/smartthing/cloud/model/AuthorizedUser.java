@@ -1,21 +1,17 @@
 package ru.pobopo.smartthing.cloud.model;
 
 import io.jsonwebtoken.Claims;
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.Builder;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
+
+import java.io.Serializable;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -33,7 +29,7 @@ public class AuthorizedUser implements Serializable {
 
     private final TokenType tokenType;
     private final UserEntity user;
-    private final Collection<? extends GrantedAuthority> authorities;
+    private final Collection<SimpleGrantedAuthority> authorities;
     private final GatewayEntity gateway;
 
     public static AuthorizedUser build(TokenType tokenType, UserEntity user, Collection<? extends GrantedAuthority> authorities) {
@@ -53,8 +49,19 @@ public class AuthorizedUser implements Serializable {
         builder
             .tokenType(tokenType)
             .user(user)
-            .authorities(authorities == null ? List.of() : authorities)
             .gateway(gateway);
+
+        switch (tokenType) {
+            case USER:
+                builder.authorities(
+                    authorities.stream().map((a) -> new SimpleGrantedAuthority(a.getAuthority())).collect(Collectors.toList())
+                );
+                break;
+            case GATEWAY:
+                builder.authorities(List.of(new SimpleGrantedAuthority(Role.GATEWAY.getName())));
+                break;
+        }
+
         return builder.build();
     }
 

@@ -1,10 +1,5 @@
 package ru.pobopo.smartthing.cloud.service.impl;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
-import javax.naming.AuthenticationException;
-import javax.validation.constraints.NotNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -12,11 +7,16 @@ import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.entity.RequestTemplateEntity;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
 import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
+import ru.pobopo.smartthing.cloud.model.Role;
+
+import javax.naming.AuthenticationException;
+import javax.validation.constraints.NotNull;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class AuthorisationUtils {
-    public static final String USER_ROLE = "user";
-    public static final String ADMIN_ROLE = "admin";
     public static final String GATEWAY_ADMIN_ROLE = "gateway_admin";
 
     /**
@@ -41,7 +41,7 @@ public class AuthorisationUtils {
             return false;
         }
         AuthorizedUser authentication = getAuthorizedUser();
-        return checkAuthority(authentication, List.of(ADMIN_ROLE, GATEWAY_ADMIN_ROLE))
+        return checkAuthority(authentication, List.of(Role.ADMIN.getName(), GATEWAY_ADMIN_ROLE))
                || isSameUser(authentication, gatewayEntity.getOwner());
     }
 
@@ -56,7 +56,7 @@ public class AuthorisationUtils {
             return false;
         }
         AuthorizedUser authentication = getAuthorizedUser();
-        return checkAuthority(authentication, List.of(ADMIN_ROLE)) || isSameUser(authentication, entity.getOwner());
+        return checkAuthority(authentication, List.of(Role.ADMIN.getName())) || isSameUser(authentication, entity.getOwner());
     }
 
     /**

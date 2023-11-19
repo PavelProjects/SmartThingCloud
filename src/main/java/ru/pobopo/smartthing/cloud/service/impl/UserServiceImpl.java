@@ -1,19 +1,21 @@
 package ru.pobopo.smartthing.cloud.service.impl;
 
-import java.util.Objects;
-import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
 import ru.pobopo.smartthing.cloud.entity.UserRoleEntity;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
+import ru.pobopo.smartthing.cloud.model.Role;
 import ru.pobopo.smartthing.cloud.repository.UserRepository;
 import ru.pobopo.smartthing.cloud.repository.UserRoleRepository;
 import ru.pobopo.smartthing.cloud.service.UserService;
+
+import java.time.LocalDateTime;
+import java.util.Objects;
+import java.util.Optional;
 
 @Component
 @Slf4j
@@ -61,7 +63,7 @@ public class UserServiceImpl implements UserService {
         user.setCreationDate(LocalDateTime.now());
 
         userRepository.save(user);
-        grantUserRole(user, AuthorisationUtils.USER_ROLE);
+        grantUserRole(user, Role.USER.getName());
         return user;
     }
 

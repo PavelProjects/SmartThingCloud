@@ -50,23 +50,17 @@ services:
       BROKER_HOST: rabbitmq
       BROKER_USER: ${BROKER_USER}
       BROKER_PASSWORD: ${BROKER_PASSWORD}
-      REDIS_HOST: token-cache
-      REDIS_PORT: ${REDIS_PORT}
+      REDIS_HOST: cache
+      REDIS_PORT: 6379
       JWT_TOKEN_TTL: 3600
       REQUESTS_LIMIT: 10
   rabbitmq:
     container_name: rabbitmq
+    restart: always
     build:
       context: ./docker/rabbitmq
       dockerfile: Dockerfile
-    networks:
-      cache_network:
-        aliases:
-          - smart_thing_network
     hostname: rabbitmq
-    volumes:
-      #      - ./rabbitmq:/var/lib/rabbitmq
-      - ./docker/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.config
     ports:
       - 15672:15672
       - 5672:5672
@@ -75,13 +69,16 @@ services:
       interval: 30s
       timeout: 30s
       retries: 3
-  token-cache:
-    container_name: token-cache
-    image: redis:6.2-alpine
+    networks:
+      cache_network:
+        aliases:
+          - smart_thing_network
+  cache:
+    container_name: cache
     restart: always
-    ports:
-      - ${REDIS_PORT}:${REDIS_PORT}
-    command: redis-server --save 20 1 --loglevel warning --port ${REDIS_PORT}
+    build:
+      context: ./docker/redis
+      dockerfile: Dockerfile
     networks:
       cache_network:
         aliases:
