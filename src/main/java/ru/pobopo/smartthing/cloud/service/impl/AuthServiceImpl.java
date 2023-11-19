@@ -1,9 +1,5 @@
 package ru.pobopo.smartthing.cloud.service.impl;
 
-import java.util.Optional;
-import javax.naming.AuthenticationException;
-import javax.servlet.http.Cookie;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,11 +19,15 @@ import ru.pobopo.smartthing.cloud.event.GatewayLogoutEvent;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.jwt.JwtTokenUtil;
-import ru.pobopo.smartthing.cloud.model.TokenType;
 import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
+import ru.pobopo.smartthing.cloud.model.TokenType;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.repository.UserRepository;
 import ru.pobopo.smartthing.cloud.service.AuthService;
+
+import javax.naming.AuthenticationException;
+import java.util.List;
+import java.util.Optional;
 
 @Component
 @Slf4j
@@ -91,7 +91,7 @@ public class AuthServiceImpl implements AuthService {
         AuthorizedUser authorizedUser = AuthorizedUser.build(
                 TokenType.GATEWAY,
                 user.getUser(),
-                user.getAuthorities(),
+                List.of(),
                 gateway
         );
         long ttl = (long) days * 24 * 3600;
@@ -122,7 +122,14 @@ public class AuthServiceImpl implements AuthService {
             throw new AccessDeniedException("Token expired!");
         }
         AuthorizedUser authorizedUser = AuthorizedUser.fromClaims(jwtTokenUtil.getAllClaimsFromToken(token));
-        checkExistence(token, authorizedUser);
+
+        String cachedToken = getTokenFromRedis(authorizedUser);
+        if (!StringUtils.equals(token, cachedToken)) {
+            log.debug("Tokens not equals (given ::: cached): {} ::: {}", token, cachedToken);
+            throw new AccessDeniedException("Not valid token");
+        }
+
+        checkExistence(authorizedUser);
         log.debug("Authorized user: {}", authorizedUser);
         return authorizedUser;
     }
@@ -150,7 +157,7 @@ public class AuthServiceImpl implements AuthService {
     private String generateTokenIfNeedTo(AuthorizedUser authorizedUser, long ttl) {
         String token = getTokenFromRedis(authorizedUser);
         if (StringUtils.isNotBlank(token)) {
-            log.info("Got active token from redis for authorized user [{}], reusing", authorizedUser);
+            log.debug("Got active token from redis for authorized user [{}], reusing", authorizedUser);
             return token;
         }
 
@@ -169,18 +176,25 @@ public class AuthServiceImpl implements AuthService {
             String key = buildRedisKey(authorizedUser.getUser(), authorizedUser.getGateway());
             if (ttl > 0) {
                 jedis.setex(key, ttl, token);
+                log.info("Saved authorization {} in redis with key [{}] (ttl {})", authorizedUser, key, tokenTimeToLive);
             } else {
                 jedis.set(key, token);
+                log.info("Saved authorization {} in redis with key [{}] (no ttl)", authorizedUser, key);
             }
-            log.info("Saved authorization {} in redis with key [{}] (ttl {})", authorizedUser, key, tokenTimeToLive);
         }
     }
 
     private String getTokenFromRedis(AuthorizedUser authorizedUser) {
         try (Jedis jedis = jedisPool.getResource()) {
             String key = buildRedisKey(authorizedUser.getUser(), authorizedUser.getGateway());
-            log.info("Trying to get token from redis for authorized user [{}] by key {}", authorizedUser, key);
-            return jedis.get(key);
+            log.debug("Trying to get token from redis for authorized user [{}] by key {}", authorizedUser, key);
+            String token = jedis.get(key);
+            if (StringUtils.isBlank(token)) {
+                log.debug("Token not found");
+            } else {
+                log.debug("Got token from cache");
+            }
+            return token;
         }
     }
 
@@ -214,11 +228,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
 
-    private void checkExistence(String token, AuthorizedUser authorizedUser) throws AccessDeniedException {
-        if (!StringUtils.equals(token, getTokenFromRedis(authorizedUser))) {
-            throw new AccessDeniedException("Not valid token");
-        }
-
+    private void checkExistence(AuthorizedUser authorizedUser) throws AccessDeniedException {
         // is it really necessary?
         if (authorizedUser.getUser() == null) {
             log.error("Missing user in token");

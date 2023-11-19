@@ -1,12 +1,5 @@
 package ru.pobopo.smartthing.cloud.service.impl;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import javax.naming.AuthenticationException;
-import javax.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,15 +17,22 @@ import ru.pobopo.smartthing.cloud.event.GatewayLoginEvent;
 import ru.pobopo.smartthing.cloud.event.GatewayLogoutEvent;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.BrokerException;
+import ru.pobopo.smartthing.cloud.rabbitmq.BaseMessage;
 import ru.pobopo.smartthing.cloud.rabbitmq.DeviceRequestMessage;
 import ru.pobopo.smartthing.cloud.rabbitmq.GatewayCommand;
+import ru.pobopo.smartthing.cloud.rabbitmq.GatewayResponseProcessor;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.repository.GatewayRequestRepository;
-import ru.pobopo.smartthing.cloud.repository.UserRepository;
 import ru.pobopo.smartthing.cloud.service.GatewayBrokerService;
-import ru.pobopo.smartthing.cloud.rabbitmq.GatewayResponseProcessor;
 import ru.pobopo.smartthing.cloud.service.RabbitMqService;
-import ru.pobopo.smartthing.cloud.rabbitmq.BaseMessage;
+
+import javax.naming.AuthenticationException;
+import javax.validation.ValidationException;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Component
 @Slf4j
@@ -40,7 +40,6 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
 
     private final int requestsLimit;
     private final GatewayRequestRepository requestRepository;
-    private final UserRepository userRepository;
     private final GatewayRepository gatewayRepository;
     private final RabbitMqService rabbitMqService;
     private final GatewayResponseProcessor responseProcessor;
@@ -49,13 +48,11 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
     public GatewayBrokerServiceImpl(
         Environment environment,
         GatewayRequestRepository requestRepository,
-        UserRepository userRepository,
         RabbitMqService rabbitMqService,
         GatewayRepository gatewayRepository,
         GatewayResponseProcessor responseProcessor
     ) {
         this.requestRepository = requestRepository;
-        this.userRepository = userRepository;
         this.rabbitMqService = rabbitMqService;
         this.gatewayRepository = gatewayRepository;
         this.responseProcessor = responseProcessor;

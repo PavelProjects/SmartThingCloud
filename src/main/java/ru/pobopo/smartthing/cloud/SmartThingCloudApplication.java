@@ -7,9 +7,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
+import ru.pobopo.smartthing.cloud.model.Role;
 import ru.pobopo.smartthing.cloud.service.GatewayBrokerService;
 import ru.pobopo.smartthing.cloud.service.UserService;
-import ru.pobopo.smartthing.cloud.service.impl.AuthorisationUtils;
 
 @Slf4j
 @SpringBootApplication
@@ -27,7 +27,7 @@ public class SmartThingCloudApplication {
             String password = environment.getProperty("admin.password", "admin");
 
             UserEntity adminUser = userService.createUser(login, password);
-            userService.grantUserRole(adminUser, AuthorisationUtils.ADMIN_ROLE);
+            userService.grantUserRole(adminUser, Role.ADMIN.getName());
 
             try {
                 gatewayMessagingService.addResponseListeners();
