@@ -3,7 +3,6 @@ package ru.pobopo.smartthing.cloud.service.impl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -13,8 +12,6 @@ import org.webjars.NotFoundException;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.entity.GatewayRequestEntity;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
-import ru.pobopo.smartthing.cloud.event.GatewayLoginEvent;
-import ru.pobopo.smartthing.cloud.event.GatewayLogoutEvent;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.BrokerException;
 import ru.pobopo.smartthing.cloud.rabbitmq.BaseMessage;
@@ -137,7 +134,7 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
 
         log.info("Adding response listeners for gateways. Total count: {}", entities.size());
         for (GatewayEntity entity: entities) {
-            if (StringUtils.isNotBlank(entity.getQueueIn()) && StringUtils.isNotBlank(entity.getQueueOut())) {
+            if (StringUtils.isNotBlank(entity.getConfig().getQueueIn()) && StringUtils.isNotBlank(entity.getConfig().getQueueOut())) {
                 rabbitMqService.createQueues(entity);
                 addResponseListener(entity);
             } else {
@@ -159,31 +156,22 @@ public class GatewayBrokerServiceImpl implements GatewayBrokerService {
         rabbitMqService.removeQueueListener(entity);
     }
 
-    @EventListener
-    public void gatewayLogoutEvent(GatewayLogoutEvent event) throws IOException {
-        if (event.getGateway() == null) {
-            log.error("There is no gateway in event!");
+    @Override
+    public void gatewayLogout(GatewayEntity entity) throws IOException {
+        if (entity == null) {
+            log.error("Gateway is missing!");
         }
 
         try {
-            log.info("Trying to send logout event to [{}]", event.getGateway());
+            log.info("Trying to send logout event to [{}]", entity);
             GatewayCommand command = new GatewayCommand("logout", null);
             command.setCacheable(false);
-            sendMessage(event.getGateway(), command);
+            sendMessage(entity, command);
         } catch (Exception exception) {
             log.error("Failed to send logout message: {}", exception.getMessage());
         }
-        log.warn("Removing queue response listener and queues for gateway [{}]", event.getGateway());
-        removeResponseListener(event.getGateway());
-    }
-
-    @EventListener
-    public void gatewayLoginEvent(GatewayLoginEvent event) throws IOException {
-        if (event.getGateway() == null) {
-            log.error("There is no gateway in event!");
-        }
-        log.info("Gateway login, creating queues and queue response listener.");
-        addResponseListener(event.getGateway());
+        log.warn("Removing queue response listener and queues for gateway [{}]", entity);
+        removeResponseListener(entity);
     }
 
     private <T extends BaseMessage> String getTarget(GatewayEntity gateway, T message) {

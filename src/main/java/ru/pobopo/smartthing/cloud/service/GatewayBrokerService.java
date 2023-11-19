@@ -1,12 +1,13 @@
 package ru.pobopo.smartthing.cloud.service;
 
-import java.io.IOException;
-import java.util.List;
-import javax.naming.AuthenticationException;
 import org.springframework.stereotype.Component;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.entity.GatewayRequestEntity;
 import ru.pobopo.smartthing.cloud.rabbitmq.BaseMessage;
+
+import javax.naming.AuthenticationException;
+import java.io.IOException;
+import java.util.List;
 
 @Component
 public interface GatewayBrokerService {
@@ -19,4 +20,6 @@ public interface GatewayBrokerService {
     void addResponseListeners() throws IOException;
     void addResponseListener(GatewayEntity entity) throws IOException;
     void removeResponseListener(GatewayEntity entity) throws IOException;
+
+    void gatewayLogout(GatewayEntity entity) throws IOException;
 }

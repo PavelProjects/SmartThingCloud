@@ -3,15 +3,19 @@ package ru.pobopo.smartthing.cloud.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import ru.pobopo.smartthing.cloud.annotation.RequiredRole;
 import ru.pobopo.smartthing.cloud.controller.model.CreateGatewayRequest;
+import ru.pobopo.smartthing.cloud.dto.GatewayConfigDto;
 import ru.pobopo.smartthing.cloud.dto.GatewayDto;
 import ru.pobopo.smartthing.cloud.dto.GatewayShortDto;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
+import ru.pobopo.smartthing.cloud.mapper.GatewayConfigMapper;
 import ru.pobopo.smartthing.cloud.mapper.GatewayMapper;
+import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
 import ru.pobopo.smartthing.cloud.service.GatewayService;
 import ru.pobopo.smartthing.cloud.service.RabbitMqService;
 
@@ -21,6 +25,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
+import static ru.pobopo.smartthing.cloud.model.Role.Constants.GATEWAY;
 import static ru.pobopo.smartthing.cloud.model.Role.Constants.USER;
 
 @RestController
@@ -30,16 +35,18 @@ public class GatewayManagementController {
     private final GatewayService gatewayService;
     private final RabbitMqService rabbitMqService;
     private final GatewayMapper gatewayMapper;
+    private final GatewayConfigMapper configMapper;
 
     @Autowired
     public GatewayManagementController(
         GatewayService gatewayService,
         RabbitMqService rabbitMqService,
-        GatewayMapper gatewayMapper
-    ) {
+        GatewayMapper gatewayMapper,
+        GatewayConfigMapper configMapper) {
         this.gatewayService = gatewayService;
         this.rabbitMqService = rabbitMqService;
         this.gatewayMapper = gatewayMapper;
+        this.configMapper = configMapper;
     }
 
     @RequiredRole(roles = USER)
@@ -85,5 +92,24 @@ public class GatewayManagementController {
         }
         dto.setOnline(rabbitMqService.isOnline(dto));
         return dto;
+    }
+
+    @RequiredRole(roles = USER)
+    @GetMapping("/config/{id}")
+    public GatewayConfigDto getConfigById(@PathVariable String id) {
+        GatewayEntity gateway = gatewayService.getGateway(id);
+        if (gateway == null || gateway.getConfig() == null) {
+            return null;
+        }
+        return configMapper.toDto(gateway.getConfig());
+    }
+
+    @RequiredRole(roles = GATEWAY)
+    @GetMapping("/config")
+    public GatewayConfigDto getConfig(@AuthenticationPrincipal AuthorizedUser authorizedUser) throws AccessDeniedException {
+        if (authorizedUser.getGateway() == null) {
+            throw new AccessDeniedException("Gateway entity is missing");
+        }
+        return configMapper.toDto(gatewayService.getConfig(authorizedUser.getGateway().getId()));
     }
 }

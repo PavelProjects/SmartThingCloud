@@ -32,7 +32,7 @@ public class SmartThingCloudApplication {
             try {
                 gatewayMessagingService.addResponseListeners();
             } catch (Exception exception) {
-                log.error("Failed to add response listeners");
+                log.error("Failed to add response listeners", exception);
             }
         };
     }

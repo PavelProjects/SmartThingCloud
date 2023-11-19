@@ -1,11 +1,13 @@
 package ru.pobopo.smartthing.cloud.config;
 
 import com.rabbitmq.client.ConnectionFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import ru.pobopo.smartthing.cloud.rabbitmq.RabbitCreditsHolder;
 
+@Slf4j
 @Configuration
 public class RabbitMqConfig {
     @Bean
@@ -17,8 +19,10 @@ public class RabbitMqConfig {
 
     @Bean
     public ConnectionFactory connectionFactory(Environment environment, RabbitCreditsHolder creditsHolder) {
-        String brokerHost = environment.getProperty("BROKER_HOST", "192.168.1.76");
+        String brokerHost = environment.getProperty("BROKER_HOST", "localhost");
         String brokerPort = environment.getProperty("BROKER_PORT", "5672");
+
+        log.info("RabbitMq loaded host and port: {}:{}", brokerHost, brokerPort);
 
         ConnectionFactory connectionFactory = new ConnectionFactory();
         connectionFactory.setHost(brokerHost);
