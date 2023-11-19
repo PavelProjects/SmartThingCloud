@@ -98,13 +98,15 @@ public class GatewayServiceImpl implements GatewayService {
         GatewayEntity entity = getGatewayWithValidation(id);
         log.warn("Deleting gateway {}", entity);
 
+        log.warn("Deleting gateway's config");
+        configRepository.deleteByGateway(entity);
         log.warn("Deleting gateway's requests");
         requestRepository.deleteByGateway(entity);
-        log.warn("Deleting gateway queues and response listeners");
-        brokerService.removeResponseListener(entity);
 
         gatewayRepository.delete(entity);
 
+        log.warn("Deleting gateway queues and response listeners");
+        brokerService.removeResponseListener(entity);
         rabbitMqService.deleteQueues(entity);
 
         log.warn("Gateway {} was deleted!", entity);

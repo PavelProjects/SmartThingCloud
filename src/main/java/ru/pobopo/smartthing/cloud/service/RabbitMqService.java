@@ -1,6 +1,5 @@
 package ru.pobopo.smartthing.cloud.service;
 
-import ru.pobopo.smartthing.cloud.dto.GatewayDto;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.exception.UnsupportedMessageClassException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
@@ -8,7 +7,6 @@ import ru.pobopo.smartthing.cloud.rabbitmq.BaseMessage;
 import ru.pobopo.smartthing.cloud.rabbitmq.MessageResponse;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.function.Consumer;
 
 public interface RabbitMqService {
@@ -24,6 +22,5 @@ public interface RabbitMqService {
     <T extends BaseMessage> String send(GatewayEntity entity, T message)
         throws IOException, UnsupportedMessageClassException, ValidationException;
 
-    void checkIsOnline(List<GatewayDto> gatewayDtoList) throws InterruptedException;
-    boolean isOnline(GatewayDto dto) throws IOException;
+    boolean isOnline(GatewayEntity gateway) throws IOException;
 }

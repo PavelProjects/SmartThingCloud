@@ -78,20 +78,20 @@ public class GatewayManagementController {
     @GetMapping("/list")
     public List<GatewayDto> getList() throws AuthenticationException, InterruptedException {
         List<GatewayEntity> gateways = gatewayService.getUserGateways();
-        List<GatewayDto> dtos = gatewayMapper.toDto(gateways);
-        rabbitMqService.checkIsOnline(dtos);
-        return dtos;
+        return gatewayMapper.toDto(gateways);
     }
 
     @RequiredRole(roles = USER)
     @GetMapping("/{id}")
-    public GatewayDto getById(@PathVariable String id) throws IOException, AccessDeniedException, ValidationException, AuthenticationException {
-        GatewayDto dto = gatewayMapper.toDto(gatewayService.getGateway(id));
-        if (dto == null) {
-            return null;
-        }
-        dto.setOnline(rabbitMqService.isOnline(dto));
-        return dto;
+    public GatewayDto getById(@PathVariable String id) throws AccessDeniedException, ValidationException, AuthenticationException {
+        return gatewayMapper.toDto(gatewayService.getGateway(id));
+    }
+
+    @RequiredRole(roles = USER)
+    @GetMapping("/online/{id}")
+    public boolean isOnline(@PathVariable String id) throws AccessDeniedException, ValidationException, AuthenticationException, IOException {
+        GatewayEntity entity = gatewayService.getGateway(id);
+        return rabbitMqService.isOnline(entity);
     }
 
     @RequiredRole(roles = USER)

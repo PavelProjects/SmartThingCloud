@@ -7,5 +7,4 @@ public class GatewayDto {
     private String id;
     private String name;
     private String description;
-    private boolean online;
 }

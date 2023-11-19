@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import ru.pobopo.smartthing.cloud.dto.GatewayDto;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.exception.UnsupportedMessageClassException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
@@ -23,12 +22,8 @@ import ru.pobopo.smartthing.cloud.service.RabbitMqService;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
@@ -50,7 +45,6 @@ public class RabbitMqServiceImpl implements RabbitMqService {
     @Autowired
     public RabbitMqServiceImpl(ConnectionFactory connectionFactory) {
         this.connectionFactory = connectionFactory;
-        log.info("RabbitMq global host and port: {}:{}", brokerHost, brokerPort);
     }
 
     @EventListener
@@ -108,8 +102,12 @@ public class RabbitMqServiceImpl implements RabbitMqService {
     @Override
     public void removeQueueListener(GatewayEntity entity) throws IOException {
         String consumerTag = buildConsumerTag(entity);
-        channel.basicCancel(consumerTag);
-        consumersTags.remove(consumerTag);
+        if (consumersTags.contains(consumerTag)) {
+            channel.basicCancel(consumerTag);
+            consumersTags.remove(consumerTag);
+        } else {
+            log.warn("No consumers for gateway {} by tag {}", entity, consumerTag);
+        }
     }
 
     @Override
@@ -133,33 +131,11 @@ public class RabbitMqServiceImpl implements RabbitMqService {
     }
 
     @Override
-    public boolean isOnline(GatewayDto gatewayDto) throws IOException {
-//        return channel.consumerCount(gatewayDto.getConfig().getQueueIn()) > 0;
-        return false; //todo
-    }
-
-    @Override
-    public void checkIsOnline(List<GatewayDto> gateways) throws InterruptedException {
-        if (gateways.isEmpty()) {
-            return;
+    public boolean isOnline(GatewayEntity gateway) throws IOException {
+        if (gateway == null || gateway.getConfig() == null) {
+            return false;
         }
-
-        int size = gateways.size();
-        CountDownLatch latch = new CountDownLatch(size);
-        ExecutorService executorService = Executors.newFixedThreadPool(size);
-        gateways.forEach(entity ->
-            executorService.submit(() -> {
-                boolean online = false;
-                try {
-                    online = isOnline(entity);
-                } catch (IOException e) {
-                    log.error("Failed to check gateway {} availability: {}", entity, e.getMessage(), e);
-                }
-                entity.setOnline(online);
-                latch.countDown();
-            })
-        );
-        latch.await();
+        return channel.consumerCount(gateway.getConfig().getQueueIn()) > 0;
     }
 
     @NonNull
