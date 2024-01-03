@@ -1,22 +1,16 @@
 package ru.pobopo.smartthing.cloud.entity;
 
-import java.time.LocalDateTime;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
 import lombok.Data;
 import org.hibernate.annotations.GenericGenerator;
 
+import javax.persistence.*;
+import java.time.LocalDateTime;
+
 @Data
 @Entity
-@Table(name = GatewayRequestEntity.TYPE)
+@Table(name = GatewayRequestEntity.TABLE_NAME)
 public class GatewayRequestEntity {
-    public static final String TYPE = "smt_gateway_request";
+    public static final String TABLE_NAME = "smt_gateway_request";
 
     @Id
     @GenericGenerator(name = "entity_id", strategy = "ru.pobopo.smartthing.cloud.entity.EntityIdGenerator")

@@ -1,19 +1,19 @@
 package ru.pobopo.smartthing.cloud.entity;
 
-import javax.persistence.*;
-import java.time.LocalDateTime;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.GenericGenerator;
 
+import javax.persistence.*;
+import java.time.LocalDateTime;
+
 @Entity
-@Table(name = UserEntity.TYPE)
+@Table(name = UserEntity.TABLE_NAME)
 @Getter
 @Setter
 public class UserEntity {
-    public static final String TYPE = "smt_user";
+    public static final String TABLE_NAME = "smt_user";
 
     @Id
     @GenericGenerator(name = "entity_id", strategy = "ru.pobopo.smartthing.cloud.entity.EntityIdGenerator")

@@ -1,21 +1,15 @@
 package ru.pobopo.smartthing.cloud.entity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
 import lombok.Data;
 import org.hibernate.annotations.GenericGenerator;
 
+import javax.persistence.*;
+
 @Data
 @Entity
-@Table(name = RequestTemplateEntity.TYPE)
+@Table(name = RequestTemplateEntity.TABLE_NAME)
 public class RequestTemplateEntity {
-    public static final String TYPE = "smt_device_request_template";
+    public static final String TABLE_NAME = "smt_device_request_template";
 
     @Id
     @GenericGenerator(name = "entity_id", strategy = "ru.pobopo.smartthing.cloud.entity.EntityIdGenerator")

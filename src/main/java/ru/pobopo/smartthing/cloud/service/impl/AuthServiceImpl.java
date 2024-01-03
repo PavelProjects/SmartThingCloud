@@ -1,8 +1,8 @@
 package ru.pobopo.smartthing.cloud.service.impl;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
+import ru.pobopo.smartthing.cloud.entity.GatewayTokenEntity;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
@@ -19,41 +20,31 @@ import ru.pobopo.smartthing.cloud.jwt.JwtTokenUtil;
 import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
 import ru.pobopo.smartthing.cloud.model.TokenType;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
+import ru.pobopo.smartthing.cloud.repository.GatewayTokenRepository;
 import ru.pobopo.smartthing.cloud.repository.UserRepository;
 import ru.pobopo.smartthing.cloud.service.AuthService;
 import ru.pobopo.smartthing.cloud.service.GatewayBrokerService;
 
 import javax.naming.AuthenticationException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
     public static final String USER_COOKIE_NAME = "SMTJwt";
 
     private final UserRepository userRepository;
     private final GatewayRepository gatewayRepository;
+    private final GatewayTokenRepository tokenRepository;
     private final JwtTokenUtil jwtTokenUtil;
     private final JedisPool jedisPool;
     private final GatewayBrokerService gatewayBrokerService;
 
     @Value("${jwt.token.ttl}")
     private long tokenTimeToLive;
-
-    @Autowired
-    public AuthServiceImpl(
-            UserRepository userRepository,
-            GatewayRepository gatewayRepository,
-            JwtTokenUtil jwtTokenUtil,
-            JedisPool jedisPool,
-            GatewayBrokerService gatewayBrokerService) {
-        this.userRepository = userRepository;
-        this.gatewayRepository = gatewayRepository;
-        this.jwtTokenUtil = jwtTokenUtil;
-        this.jedisPool = jedisPool;
-        this.gatewayBrokerService = gatewayBrokerService;
-    }
 
     @Override
     public AuthorizedUser authorizeUser(Authentication authentication) {
@@ -63,7 +54,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public String getUserToken(AuthorizedUser authorizedUser) {
+    public String createUserToken(AuthorizedUser authorizedUser) {
         return generateTokenIfNeedTo(authorizedUser, tokenTimeToLive);
     }
 
@@ -71,7 +62,7 @@ public class AuthServiceImpl implements AuthService {
     public ResponseCookie getUserCookie(AuthorizedUser authorizedUser) {
         ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(
                         USER_COOKIE_NAME,
-                        getUserToken(authorizedUser)
+                        createUserToken(authorizedUser)
                 )
                 .path("/")
                 .maxAge(tokenTimeToLive)
@@ -80,7 +71,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public String getGatewayToken(String gatewayId, int days)
+    public String createGatewayToken(String gatewayId, int days)
             throws ValidationException, AuthenticationException, AccessDeniedException {
         GatewayEntity gateway = getGatewayWithValidation(gatewayId);
 
@@ -164,6 +155,9 @@ public class AuthServiceImpl implements AuthService {
                 ttl
         );
         saveTokenInRedis(authorizedUser, token, ttl);
+        if (authorizedUser.getGateway() != null) {
+            saveTokenInDb(authorizedUser, token, ttl);
+        }
         return token;
     }
 
@@ -187,12 +181,40 @@ public class AuthServiceImpl implements AuthService {
             String token = jedis.get(key);
             if (StringUtils.isBlank(token)) {
                 log.debug("Token not found");
+                if (authorizedUser.getGateway() != null) {
+                    return getTokenFromDb(authorizedUser);
+                }
             } else {
                 log.debug("Got token from cache");
             }
             return token;
         }
     }
+
+    private String getTokenFromDb(AuthorizedUser authorizedUser) {
+        if (authorizedUser.getGateway() == null) {
+            return null;
+        }
+        log.debug("Trying to get token for {} from db", authorizedUser.getGateway());
+        GatewayTokenEntity entity = tokenRepository.findByGateway(authorizedUser.getGateway());
+        if (entity != null) {
+            log.debug("Got token from db");
+            saveTokenInRedis(authorizedUser, entity.getToken(), entity.getTtl());
+            return entity.getToken();
+        }
+        return null;
+    }
+
+    private void saveTokenInDb(AuthorizedUser authorizedUser, String token, long ttl) {
+        GatewayTokenEntity tokenEntity = new GatewayTokenEntity();
+        tokenEntity.setOwner(authorizedUser.getUser());
+        tokenEntity.setGateway(authorizedUser.getGateway());
+        tokenEntity.setTtl(ttl);
+        tokenEntity.setToken(token);
+        tokenEntity.setCreateDate(LocalDateTime.now());
+        tokenRepository.save(tokenEntity);
+    }
+
 
     private void removeTokenFromRedis(AuthorizedUser authorizedUser) {
         removeTokenFromRedis(authorizedUser.getUser(), authorizedUser.getGateway());

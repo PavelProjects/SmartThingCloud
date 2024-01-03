@@ -8,11 +8,11 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = GatewayEntity.TYPE)
+@Table(name = GatewayEntity.TABLE_NAME)
 @Getter
 @Setter
 public class GatewayEntity {
-    public static final String TYPE = "smt_gateway";
+    public static final String TABLE_NAME = "smt_gateway";
 
     @Id
     @GenericGenerator(name = "entity_id", strategy = "ru.pobopo.smartthing.cloud.entity.EntityIdGenerator")

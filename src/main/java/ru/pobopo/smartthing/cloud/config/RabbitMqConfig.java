@@ -19,7 +19,7 @@ public class RabbitMqConfig {
 
     @Bean
     public ConnectionFactory connectionFactory(Environment environment, RabbitCreditsHolder creditsHolder) {
-        String brokerHost = environment.getProperty("BROKER_HOST", "localhost");
+        String brokerHost = environment.getProperty("BROKER_HOST", "localhost"); //todo generate random key pair
         String brokerPort = environment.getProperty("BROKER_PORT", "5672");
 
         log.info("RabbitMq loaded host and port: {}:{}", brokerHost, brokerPort);

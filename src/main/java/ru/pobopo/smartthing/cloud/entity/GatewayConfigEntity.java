@@ -7,11 +7,11 @@ import org.hibernate.annotations.GenericGenerator;
 import javax.persistence.*;
 
 @Entity
-@Table(name = GatewayConfigEntity.TYPE)
+@Table(name = GatewayConfigEntity.TABLE_NAME)
 @Data
 @ToString
 public class GatewayConfigEntity {
-    public static final String TYPE = "smt_gateway_config";
+    public static final String TABLE_NAME = "smt_gateway_config";
 
     @Id
     @GenericGenerator(name = "entity_id", strategy = "ru.pobopo.smartthing.cloud.entity.EntityIdGenerator")

@@ -1,19 +1,16 @@
 package ru.pobopo.smartthing.cloud.entity;
 
-import java.time.LocalDateTime;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
 import lombok.Data;
 import org.hibernate.annotations.GenericGenerator;
 
+import javax.persistence.*;
+import java.time.LocalDateTime;
+
 @Entity
-@Table(name = UserRoleEntity.TYPE)
+@Table(name = UserRoleEntity.TABLE_NAME)
 @Data
 public class UserRoleEntity {
-    public static final String TYPE = "smt_user_role";
+    public static final String TABLE_NAME = "smt_user_role";
 
     @Id
     @GenericGenerator(name = "entity_id", strategy = "ru.pobopo.smartthing.cloud.entity.EntityIdGenerator")
