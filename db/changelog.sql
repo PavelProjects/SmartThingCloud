@@ -1,9 +1,6 @@
-begin;
+--liquibase formatted sql
 
---drop table _user, _user_credits, _comment, _notification, _task, _user_task, dict_notify_type, dict_task_status;
---drop sequence main_id_sequence;
---drop function getnextid;
-
+--changeset pobopo:3012024
 create sequence main_id_sequence;
 
 create function getnextid() returns char(8) as
@@ -78,4 +75,6 @@ create table smt_gateway_request (
     success boolean
 );
 
-commit;
+--rollback drop table _user, _user_credits, _comment, _notification, _task, _user_task, dict_notify_type, dict_task_status;
+ -- drop sequence main_id_sequence;
+ -- drop function getnextid;

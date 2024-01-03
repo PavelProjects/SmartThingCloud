@@ -22,7 +22,7 @@ public class RabbitMqConfig {
         String brokerHost = environment.getProperty("BROKER_HOST", "localhost");
         String brokerPort = environment.getProperty("BROKER_PORT", "5672");
 
-        log.info("RabbitMq loaded host and port: {}:{}", brokerHost, brokerPort);
+        log.info("RabbitMq configured host and port: {}:{}", brokerHost, brokerPort);
 
         ConnectionFactory connectionFactory = new ConnectionFactory();
         connectionFactory.setHost(brokerHost);

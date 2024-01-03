@@ -20,8 +20,6 @@ services:
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - "${DB_PORT}:5432"
-    volumes:
-      - ./docker/db/:/docker-entrypoint-initdb.d/
   app:
     container_name: smart-thing-cloud
     build:
