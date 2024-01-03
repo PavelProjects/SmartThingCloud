@@ -1,4 +1,4 @@
-package ru.pobopo.smartthing.cloud.service.impl;
+package ru.pobopo.smartthing.cloud.service;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;

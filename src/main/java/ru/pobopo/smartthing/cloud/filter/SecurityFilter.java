@@ -1,11 +1,5 @@
 package ru.pobopo.smartthing.cloud.filter;
 
-import java.io.IOException;
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +13,14 @@ import org.springframework.web.util.WebUtils;
 import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
 import ru.pobopo.smartthing.cloud.service.AuthService;
 
-import static ru.pobopo.smartthing.cloud.service.impl.AuthServiceImpl.USER_COOKIE_NAME;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+import static ru.pobopo.smartthing.cloud.service.AuthService.USER_COOKIE_NAME;
 
 @Component
 public class SecurityFilter extends OncePerRequestFilter {

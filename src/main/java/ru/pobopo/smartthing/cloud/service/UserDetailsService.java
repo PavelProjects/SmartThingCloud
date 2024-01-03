@@ -1,14 +1,11 @@
-package ru.pobopo.smartthing.cloud.service.impl;
+package ru.pobopo.smartthing.cloud.service;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
@@ -16,19 +13,21 @@ import ru.pobopo.smartthing.cloud.entity.UserRoleEntity;
 import ru.pobopo.smartthing.cloud.repository.UserRepository;
 import ru.pobopo.smartthing.cloud.repository.UserRoleRepository;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Component
 @Scope("singleton")
-public class UserDetailsServiceImpl implements UserDetailsService {
+public class UserDetailsService {
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;
 
     @Autowired
-    public UserDetailsServiceImpl(UserRepository userRepository, UserRoleRepository userRoleRepository) {
+    public UserDetailsService(UserRepository userRepository, UserRoleRepository userRoleRepository) {
         this.userRepository = userRepository;
         this.userRoleRepository = userRoleRepository;
     }
 
-    @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         UserEntity user = userRepository.findByLogin(username);
         if (null != user) {
