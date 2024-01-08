@@ -7,17 +7,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.webjars.NotFoundException;
 import ru.pobopo.smartthing.cloud.dto.GatewayShortDto;
-import ru.pobopo.smartthing.cloud.entity.GatewayConfigEntity;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
-import ru.pobopo.smartthing.cloud.repository.GatewayConfigRepository;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.repository.GatewayRequestRepository;
 
 import javax.naming.AuthenticationException;
 import javax.validation.constraints.NotNull;
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -27,35 +24,17 @@ import java.util.Optional;
 public class GatewayService {
     private final GatewayRepository gatewayRepository;
     private final GatewayRequestRepository requestRepository;
-    private final GatewayBrokerService brokerService;
-    private final GatewayConfigRepository configRepository;
-    private final RabbitMqService rabbitMqService;
 
     @Autowired
     public GatewayService(
             GatewayRepository gatewayRepository,
-            GatewayRequestRepository requestRepository,
-            GatewayBrokerService brokerService,
-            GatewayConfigRepository configRepository, RabbitMqService rabbitMqService) {
+            GatewayRequestRepository requestRepository) {
         this.gatewayRepository = gatewayRepository;
         this.requestRepository = requestRepository;
-        this.brokerService = brokerService;
-        this.configRepository = configRepository;
-        this.rabbitMqService = rabbitMqService;
     }
 
     public GatewayEntity createGateway(String name, String description)
-            throws AuthenticationException, ValidationException, IOException {
-
-        GatewayEntity gatewayEntity = createGatewayAndConfig(name, description);
-
-        rabbitMqService.createQueues(gatewayEntity.getConfig());
-
-        return gatewayEntity;
-    }
-
-    @Transactional
-    private GatewayEntity createGatewayAndConfig(String name, String description) throws ValidationException, AuthenticationException {
+            throws AuthenticationException, ValidationException {
         validateName(null, name);
 
         GatewayEntity gatewayEntity = new GatewayEntity();
@@ -65,9 +44,6 @@ public class GatewayService {
         gatewayEntity.setCreationDate(LocalDateTime.now());
 
         gatewayRepository.save(gatewayEntity);
-
-        GatewayConfigEntity configEntity = createGatewayConfig(gatewayEntity);
-        gatewayEntity.setConfig(configEntity);
 
         return gatewayEntity;
     }
@@ -89,20 +65,14 @@ public class GatewayService {
 
     @Transactional
     public void deleteGateway(String id)
-        throws AccessDeniedException, ValidationException, AuthenticationException, IOException {
+        throws AccessDeniedException, ValidationException, AuthenticationException {
         GatewayEntity entity = getGatewayWithValidation(id);
         log.warn("Deleting gateway {}", entity);
 
-        log.warn("Deleting gateway's config");
-        configRepository.deleteByGateway(entity);
         log.warn("Deleting gateway's requests");
         requestRepository.deleteByGateway(entity);
 
         gatewayRepository.delete(entity);
-
-        log.warn("Deleting gateway queues and response listeners");
-        brokerService.removeResponseListener(entity);
-        rabbitMqService.deleteQueues(entity.getConfig());
 
         log.warn("Gateway {} was deleted!", entity);
     }
@@ -117,34 +87,6 @@ public class GatewayService {
 
     public GatewayEntity getGateway(String id) throws AccessDeniedException, ValidationException, AuthenticationException {
         return getGatewayWithValidation(id);
-    }
-
-    public GatewayConfigEntity getConfig(String gatewayId) {
-        return configRepository.findByGatewayId(gatewayId);
-    }
-
-    private GatewayConfigEntity createGatewayConfig(GatewayEntity gateway) {
-        String host = rabbitMqService.getBrokeHost();
-        int port = rabbitMqService.getBrokePort();
-
-        if (StringUtils.isBlank(host)) {
-            throw new RuntimeException("Message broker address is null!");
-        }
-
-        String prefix = gateway.getId() + "_" + gateway.getName();
-
-        GatewayConfigEntity configEntity = new GatewayConfigEntity();
-        configEntity.setBrokerIp(host);
-        configEntity.setBrokerPort(port);
-        configEntity.setGateway(gateway);
-        configEntity.setQueueIn(prefix + "_in");
-        configEntity.setQueueOut(prefix + "_out");
-
-        configRepository.save(configEntity);
-
-        log.info("Created config for gateway [id={}] : {}", gateway.getId(), configEntity);
-
-        return configEntity;
     }
 
     @NotNull

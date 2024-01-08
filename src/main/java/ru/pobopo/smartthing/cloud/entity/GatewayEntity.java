@@ -38,9 +38,6 @@ public class GatewayEntity {
             name = "user_id", referencedColumnName = "id"))
     private UserEntity owner;
 
-    @OneToOne(fetch = FetchType.EAGER, mappedBy = "gateway")
-    private GatewayConfigEntity config;
-
     @Override
     public String toString() {
         return String.format(

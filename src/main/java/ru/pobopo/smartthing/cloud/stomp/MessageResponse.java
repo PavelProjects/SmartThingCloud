@@ -1,4 +1,4 @@
-package ru.pobopo.smartthing.cloud.rabbitmq;
+package ru.pobopo.smartthing.cloud.stomp;
 
 import lombok.Data;
 

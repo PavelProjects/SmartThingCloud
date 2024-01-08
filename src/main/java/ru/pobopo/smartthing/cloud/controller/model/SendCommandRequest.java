@@ -1,8 +1,9 @@
 package ru.pobopo.smartthing.cloud.controller.model;
 
-import java.util.Map;
 import lombok.Data;
-import ru.pobopo.smartthing.cloud.rabbitmq.GatewayCommand;
+import ru.pobopo.smartthing.cloud.stomp.GatewayCommandMessage;
+
+import java.util.Map;
 
 @Data
 public class SendCommandRequest{
@@ -10,7 +11,7 @@ public class SendCommandRequest{
     private String command;
     private Map<String, Object> parameters;
 
-    public GatewayCommand toGatewayCommand() {
-        return new GatewayCommand(command, parameters);
+    public GatewayCommandMessage toGatewayCommand() {
+        return new GatewayCommandMessage(command, parameters);
     }
 }

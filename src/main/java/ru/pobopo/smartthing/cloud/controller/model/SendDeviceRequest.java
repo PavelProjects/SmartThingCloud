@@ -1,8 +1,9 @@
 package ru.pobopo.smartthing.cloud.controller.model;
 
-import java.util.Map;
 import lombok.Data;
-import ru.pobopo.smartthing.cloud.rabbitmq.DeviceRequestMessage;
+import ru.pobopo.smartthing.cloud.stomp.DeviceRequestMessage;
+
+import java.util.Map;
 
 @Data
 public class SendDeviceRequest {

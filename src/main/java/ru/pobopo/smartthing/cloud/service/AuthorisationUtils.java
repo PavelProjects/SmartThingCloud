@@ -4,7 +4,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
-import ru.pobopo.smartthing.cloud.entity.RequestTemplateEntity;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
 import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
 import ru.pobopo.smartthing.cloud.model.Role;
@@ -43,20 +42,6 @@ public class AuthorisationUtils {
         AuthorizedUser authentication = getAuthorizedUser();
         return checkAuthority(authentication, List.of(Role.ADMIN.getName(), GATEWAY_ADMIN_ROLE))
                || isSameUser(authentication, gatewayEntity.getOwner());
-    }
-
-    /**
-     * Проверяет, может ли текущий юзер изменять шаблон запроса
-     * @param entity - шаблон запроса, доступ к которому надо проверить
-     * @return - true, если доступ есть
-     * @throws AuthenticationException выкидывается, если в контенксте нет авторизованного пользователя
-     */
-    public static boolean canManageRequestTemplate(RequestTemplateEntity entity) throws AuthenticationException {
-        if (entity == null || entity.getOwner() == null) {
-            return false;
-        }
-        AuthorizedUser authentication = getAuthorizedUser();
-        return checkAuthority(authentication, List.of(Role.ADMIN.getName())) || isSameUser(authentication, entity.getOwner());
     }
 
     /**
