@@ -40,8 +40,8 @@ public class AuthorisationUtils {
             return false;
         }
         AuthorizedUser authentication = getAuthorizedUser();
-        return checkAuthority(authentication, List.of(Role.ADMIN.getName(), GATEWAY_ADMIN_ROLE))
-               || isSameUser(authentication, gatewayEntity.getOwner());
+        return isSameUser(authentication, gatewayEntity.getOwner()) ||
+                checkAuthority(authentication, List.of(Role.ADMIN.getName(), GATEWAY_ADMIN_ROLE));
     }
 
     /**

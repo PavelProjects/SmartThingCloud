@@ -49,18 +49,4 @@ services:
       BROKER_HOST_GLOBAL: ${BROKER_HOST_GLOBAL}
       BROKER_USER: ${BROKER_USER}
       BROKER_PASSWORD: ${BROKER_PASSWORD}
-      REDIS_HOST: cache
-      REDIS_PORT: 6379
       JWT_TOKEN_TTL: 3600
-  cache:
-    container_name: cache
-    restart: always
-    build:
-      context: ./docker/redis
-      dockerfile: Dockerfile
-    ports:
-      - 6379:6379
-    networks:
-      cache_network:
-        aliases:
-          - smart_thing_network

@@ -1,17 +1,19 @@
 package ru.pobopo.smartthing.cloud.filter;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.WebUtils;
+import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
+import ru.pobopo.smartthing.cloud.jwt.JwtTokenUtil;
 import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
-import ru.pobopo.smartthing.cloud.service.AuthService;
+import ru.pobopo.smartthing.cloud.service.GatewayAuthService;
+import ru.pobopo.smartthing.cloud.service.UserAuthService;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -20,20 +22,18 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-import static ru.pobopo.smartthing.cloud.service.AuthService.USER_COOKIE_NAME;
+import static ru.pobopo.smartthing.cloud.service.UserAuthService.USER_COOKIE_NAME;
 
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class SecurityFilter extends OncePerRequestFilter {
-    private static final Logger log = LoggerFactory.getLogger(SecurityFilter.class);
     private static final String USER_TOKEN_HEADER = "SmartThing-Token-User";
     private static final String GATEWAY_TOKEN_HEADER = "SmartThing-Token-Gateway";
 
-    private final AuthService authService;
-
-    @Autowired
-    public SecurityFilter(AuthService authService) {
-        this.authService = authService;
-    }
+    private final JwtTokenUtil jwtTokenUtil;
+    private final UserAuthService userAuthService;
+    private final GatewayAuthService gatewayAuthService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -45,13 +45,25 @@ public class SecurityFilter extends OncePerRequestFilter {
         );
         if (StringUtils.isNotBlank(token)) {
             try {
-                setUserDetailsToContext(authService.validateToken(token), request);
+                AuthorizedUser authorizedUser = parseToken(token);
+                switch (authorizedUser.getTokenType()) {
+                    case USER: userAuthService.validate(authorizedUser);
+                    case GATEWAY: gatewayAuthService.validate(authorizedUser);
+                }
+                setUserDetailsToContext(authorizedUser, request);
             } catch (Exception e) {
                 log.error("Token validation failed: {}", e.getMessage());
             }
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private AuthorizedUser parseToken(String token) throws AccessDeniedException {
+        if (jwtTokenUtil.isTokenExpired(token)) {
+            throw new AccessDeniedException("Token expired!");
+        }
+        return AuthorizedUser.fromClaims(jwtTokenUtil.getAllClaimsFromToken(token));
     }
 
     private void setUserDetailsToContext(AuthorizedUser authorizedUser, HttpServletRequest request) {

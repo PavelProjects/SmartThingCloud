@@ -9,4 +9,11 @@
             <sqlFile path="rollback/30012024.sql" relativeToChangelogFile="true"/>
         </rollback>
     </changeSet>
+    <changeSet id="02" author="pobopo">
+        <comment>Add token gateway table</comment>
+        <sqlFile path="sql/12012024.sql" relativeToChangelogFile="true" splitStatements="false"/>
+        <rollback>
+            <sqlFile path="rollback/12012024.sql" relativeToChangelogFile="true"/>
+        </rollback>
+    </changeSet>
 </databaseChangeLog>
