@@ -25,6 +25,7 @@ import java.util.Optional;
 public class GatewayService {
     private final GatewayRepository gatewayRepository;
     private final GatewayRequestRepository requestRepository;
+    private final GatewayAuthService authService;
 
     public GatewayEntity createGateway(String name, String description)
             throws AuthenticationException, ValidationException {
@@ -58,7 +59,7 @@ public class GatewayService {
 
     @Transactional
     public void deleteGateway(String id)
-        throws AccessDeniedException, ValidationException, AuthenticationException {
+            throws Exception {
         GatewayEntity entity = getGatewayWithValidation(id);
         log.warn("Deleting gateway {}", entity);
 
@@ -66,6 +67,8 @@ public class GatewayService {
         requestRepository.deleteByGateway(entity);
 
         gatewayRepository.delete(entity);
+
+        authService.logout(id);
 
         log.warn("Gateway {} was deleted!", entity);
     }

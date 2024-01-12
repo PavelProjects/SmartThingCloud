@@ -50,8 +50,7 @@ public class GatewayManagementController {
 
     @RequiredRole(roles = USER)
     @DeleteMapping("/delete/{id}")
-    public void deleteGateway(@PathVariable String id)
-            throws AccessDeniedException, ValidationException, AuthenticationException {
+    public void deleteGateway(@PathVariable String id) throws Exception {
         gatewayService.deleteGateway(id);
     }
 

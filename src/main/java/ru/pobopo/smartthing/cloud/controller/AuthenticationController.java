@@ -70,7 +70,7 @@ public class AuthenticationController {
 
     @RequiredRole(roles = {USER, GATEWAY})
     @PostMapping("/gateway/logout")
-    public void gatewayLogout(@RequestBody GatewayTokenRequest request) throws ValidationException, AccessDeniedException, AuthenticationException {
-        gatewayAuthService.deleteToken(request.getGatewayId());
+    public void gatewayLogout(@RequestBody GatewayTokenRequest request) throws Exception {
+        gatewayAuthService.logout(request.getGatewayId());
     }
 }

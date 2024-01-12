@@ -12,11 +12,14 @@ import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.jwt.JwtTokenUtil;
 import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
 import ru.pobopo.smartthing.cloud.model.TokenType;
+import ru.pobopo.smartthing.cloud.model.stomp.GatewayCommand;
+import ru.pobopo.smartthing.cloud.model.stomp.GatewayCommandMessage;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.repository.GatewayTokenRepository;
 import ru.pobopo.smartthing.cloud.repository.UserRepository;
 
 import javax.naming.AuthenticationException;
+import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +32,7 @@ public class GatewayAuthService {
     private final GatewayTokenRepository gatewayTokenRepository;
     private final UserRepository userRepository;
     private final JwtTokenUtil jwtTokenUtil;
+    private final GatewayRequestService requestService;
 
     public String generateToken(String gatewayId) throws AccessDeniedException, ValidationException, AuthenticationException {
         GatewayEntity gateway = getGatewayWithValidation(gatewayId);
@@ -59,7 +63,7 @@ public class GatewayAuthService {
         return token;
     }
 
-    public void validate(AuthorizedUser authorizedUser) throws AccessDeniedException {
+    public void validate(AuthorizedUser authorizedUser, String token) throws AccessDeniedException {
         if (authorizedUser.getUser() == null) {
             log.error("Missing user in token");
             throw new AccessDeniedException();
@@ -68,24 +72,28 @@ public class GatewayAuthService {
             throw new AccessDeniedException("User not found");
         }
 
-        if (authorizedUser.getTokenType() == TokenType.GATEWAY) {
-            if (authorizedUser.getGateway() == null) {
-                throw new AccessDeniedException();
-            }
+        if (authorizedUser.getGateway() == null) {
+            throw new AccessDeniedException();
+        }
 
-            if (!gatewayRepository.existsById(authorizedUser.getGateway().getId())) {
-                throw new AccessDeniedException("Gateway not found");
-            }
+        Optional<GatewayTokenEntity> tokenEntity = gatewayTokenRepository.findByGateway(authorizedUser.getGateway());
+        if (tokenEntity.isEmpty()) {
+            throw new AccessDeniedException();
+        }
+        if (!tokenEntity.get().getToken().equals(token)) {
+            throw new AccessDeniedException("Wrong token!");
         }
     }
 
-    public void deleteToken(String gatewayId) throws AccessDeniedException, ValidationException, AuthenticationException {
+    @Transactional
+    public void logout(String gatewayId) throws Exception {
         GatewayEntity gateway = getGatewayWithValidation(gatewayId);
         Optional<GatewayTokenEntity> tokenEntity = gatewayTokenRepository.findByGateway(gateway);
         if (tokenEntity.isEmpty()) {
             throw new ValidationException("There is not token for gateway " + gatewayId);
         }
         gatewayTokenRepository.delete(tokenEntity.get());
+        requestService.sendMessage(gatewayId, new GatewayCommandMessage(GatewayCommand.LOGOUT.getName(), null));
     }
 
     private void saveToken(AuthorizedUser authorizedUser, String token) {

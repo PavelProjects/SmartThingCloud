@@ -47,8 +47,14 @@ public class SecurityFilter extends OncePerRequestFilter {
             try {
                 AuthorizedUser authorizedUser = parseToken(token);
                 switch (authorizedUser.getTokenType()) {
-                    case USER: userAuthService.validate(authorizedUser);
-                    case GATEWAY: gatewayAuthService.validate(authorizedUser);
+                    case USER: {
+                        userAuthService.validate(authorizedUser);
+                        break;
+                    }
+                    case GATEWAY: {
+                        gatewayAuthService.validate(authorizedUser, token);
+                        break;
+                    }
                 }
                 setUserDetailsToContext(authorizedUser, request);
             } catch (Exception e) {
