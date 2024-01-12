@@ -1,4 +1,4 @@
-package ru.pobopo.smartthing.cloud.stomp;
+package ru.pobopo.smartthing.cloud.model.stomp;
 
 import lombok.Getter;
 import lombok.Setter;

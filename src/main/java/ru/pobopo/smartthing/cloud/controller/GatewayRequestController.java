@@ -12,10 +12,10 @@ import ru.pobopo.smartthing.cloud.entity.GatewayRequestEntity;
 import ru.pobopo.smartthing.cloud.exception.CommandNotAllowed;
 import ru.pobopo.smartthing.cloud.mapper.GatewayRequestMapper;
 import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
+import ru.pobopo.smartthing.cloud.model.stomp.GatewayCommand;
+import ru.pobopo.smartthing.cloud.model.stomp.GatewayNotification;
+import ru.pobopo.smartthing.cloud.model.stomp.MessageResponse;
 import ru.pobopo.smartthing.cloud.service.GatewayRequestService;
-import ru.pobopo.smartthing.cloud.stomp.GatewayCommand;
-import ru.pobopo.smartthing.cloud.stomp.GatewayNotification;
-import ru.pobopo.smartthing.cloud.stomp.MessageResponse;
 
 import javax.naming.AuthenticationException;
 import java.util.List;

@@ -1,4 +1,4 @@
-package ru.pobopo.smartthing.cloud.stomp;
+package ru.pobopo.smartthing.cloud.model.stomp;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;

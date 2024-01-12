@@ -1,8 +1,8 @@
 package ru.pobopo.smartthing.cloud.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.webjars.NotFoundException;
@@ -21,17 +21,10 @@ import java.util.Optional;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class GatewayService {
     private final GatewayRepository gatewayRepository;
     private final GatewayRequestRepository requestRepository;
-
-    @Autowired
-    public GatewayService(
-            GatewayRepository gatewayRepository,
-            GatewayRequestRepository requestRepository) {
-        this.gatewayRepository = gatewayRepository;
-        this.requestRepository = requestRepository;
-    }
 
     public GatewayEntity createGateway(String name, String description)
             throws AuthenticationException, ValidationException {

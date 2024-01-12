@@ -1,7 +1,7 @@
 package ru.pobopo.smartthing.cloud.controller.model;
 
 import lombok.Data;
-import ru.pobopo.smartthing.cloud.stomp.DeviceRequestMessage;
+import ru.pobopo.smartthing.cloud.model.stomp.DeviceRequestMessage;
 
 import java.util.Map;
 

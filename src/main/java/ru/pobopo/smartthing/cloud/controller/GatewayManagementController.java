@@ -1,8 +1,9 @@
 package ru.pobopo.smartthing.cloud.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.web.bind.annotation.*;
 import ru.pobopo.smartthing.cloud.annotation.RequiredRole;
 import ru.pobopo.smartthing.cloud.controller.model.CreateGatewayRequest;
@@ -17,23 +18,18 @@ import ru.pobopo.smartthing.cloud.service.GatewayService;
 import javax.naming.AuthenticationException;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static ru.pobopo.smartthing.cloud.model.Role.Constants.USER;
 
 @RestController
 @RequestMapping("/gateway/management")
 @Slf4j
+@RequiredArgsConstructor
 public class GatewayManagementController {
     private final GatewayService gatewayService;
     private final GatewayMapper gatewayMapper;
-
-    @Autowired
-    public GatewayManagementController(
-            GatewayService gatewayService,
-            GatewayMapper gatewayMapper) {
-        this.gatewayService = gatewayService;
-        this.gatewayMapper = gatewayMapper;
-    }
+    private final SimpUserRegistry userRegistry;
 
     @RequiredRole(roles = USER)
     @PostMapping("/create")
@@ -64,7 +60,9 @@ public class GatewayManagementController {
     @GetMapping("/list")
     public List<GatewayDto> getList() throws AuthenticationException {
         List<GatewayEntity> gateways = gatewayService.getUserGateways();
-        return gatewayMapper.toDto(gateways);
+        return gatewayMapper.toDto(gateways).stream().peek(
+            gatewayDto -> gatewayDto.setOnline(userRegistry.getUser(gatewayDto.getId()) != null)
+        ).collect(Collectors.toList());
     }
 
     @RequiredRole(roles = USER)

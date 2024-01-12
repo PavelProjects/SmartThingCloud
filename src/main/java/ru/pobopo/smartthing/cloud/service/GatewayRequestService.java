@@ -15,9 +15,9 @@ import ru.pobopo.smartthing.cloud.entity.UserEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.mapper.GatewayMapper;
 import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
+import ru.pobopo.smartthing.cloud.model.stomp.*;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.repository.GatewayRequestRepository;
-import ru.pobopo.smartthing.cloud.stomp.*;
 
 import javax.naming.AuthenticationException;
 import javax.validation.ValidationException;
