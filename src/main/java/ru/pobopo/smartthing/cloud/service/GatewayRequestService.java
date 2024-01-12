@@ -13,6 +13,8 @@ import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.entity.GatewayRequestEntity;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
+import ru.pobopo.smartthing.cloud.mapper.GatewayMapper;
+import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.repository.GatewayRequestRepository;
 import ru.pobopo.smartthing.cloud.stomp.*;
@@ -33,6 +35,7 @@ public class GatewayRequestService {
     private final GatewayRequestRepository requestRepository;
     private final GatewayRepository gatewayRepository;
     private final SimpMessagingTemplate stompService;
+    private final GatewayMapper gatewayMapper;
 
     private final Map<String, GatewayRequestEntity> resultsMap = new ConcurrentHashMap<>();
 
@@ -135,6 +138,23 @@ public class GatewayRequestService {
                 resultsMap.put(id, requestEntity.get());
             }
         }
+    }
+
+    public void notification(AuthorizedUser authorizedUser, GatewayNotification notification) {
+        //impl email, push and etc notifications
+
+        Optional<GatewayEntity> gatewayOpt = gatewayRepository.findById(authorizedUser.getGateway().getId());
+        if (gatewayOpt.isEmpty()) {
+            throw new RuntimeException("Can't find gateway from token!");
+        }
+        GatewayEntity gateway = gatewayOpt.get();
+        notification.setGateway(gatewayMapper.toDto(gateway));
+        log.debug("Sending notification to {}: {}", gateway.getOwner(), notification);
+        stompService.convertAndSendToUser(
+            gateway.getOwner().getLogin(),
+            "/queue/notification",
+            notification
+        );
     }
 
     private <T extends BaseMessage> String getTarget(GatewayEntity gateway, T message) {

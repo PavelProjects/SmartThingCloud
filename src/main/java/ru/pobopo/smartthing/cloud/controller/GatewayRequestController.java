@@ -2,6 +2,7 @@ package ru.pobopo.smartthing.cloud.controller;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import ru.pobopo.smartthing.cloud.annotation.RequiredRole;
 import ru.pobopo.smartthing.cloud.controller.model.SendCommandRequest;
@@ -10,8 +11,10 @@ import ru.pobopo.smartthing.cloud.dto.GatewayRequestDto;
 import ru.pobopo.smartthing.cloud.entity.GatewayRequestEntity;
 import ru.pobopo.smartthing.cloud.exception.CommandNotAllowed;
 import ru.pobopo.smartthing.cloud.mapper.GatewayRequestMapper;
+import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
 import ru.pobopo.smartthing.cloud.service.GatewayRequestService;
 import ru.pobopo.smartthing.cloud.stomp.GatewayCommand;
+import ru.pobopo.smartthing.cloud.stomp.GatewayNotification;
 import ru.pobopo.smartthing.cloud.stomp.MessageResponse;
 
 import javax.naming.AuthenticationException;
@@ -22,7 +25,7 @@ import static ru.pobopo.smartthing.cloud.model.Role.Constants.GATEWAY;
 import static ru.pobopo.smartthing.cloud.model.Role.Constants.USER;
 
 @RestController
-@RequestMapping("/gateway/request")
+@RequestMapping("/gateway/requests")
 public class GatewayRequestController {
     private final GatewayRequestMapper gatewayRequestMapper;
     private final GatewayRequestService requestService;
@@ -69,6 +72,17 @@ public class GatewayRequestController {
         Objects.requireNonNull(response);
 
         requestService.processResponse(response);
+    }
+
+    @RequiredRole(roles = GATEWAY)
+    @PostMapping("/notification")
+    public void notification(
+            @AuthenticationPrincipal AuthorizedUser authorizedUser,
+            @RequestBody GatewayNotification notification
+    ) {
+        Objects.requireNonNull(notification);
+
+        requestService.notification(authorizedUser, notification);
     }
 
     // todo filtration by gateway, date, status and etc
