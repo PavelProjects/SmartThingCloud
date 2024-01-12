@@ -41,16 +41,6 @@ create table smt_gateway (
     description varchar(32)
 );
 
-create table smt_gateway_config (
-    id char(8) primary key default getnextid(),
-    creation_date timestamp with time zone not null default now(),
-    gateway_id char(8) not null references smt_gateway(id),
-    broker_ip varchar(128) not null,
-    broker_port int not null,
-    queue_in varchar(64) not null,
-    queue_out varchar(64) not null
-);
-
 create table smt_gateway_owner (
     id char(8) primary key default getnextid(),
     creation_date timestamp with time zone not null default now(),
@@ -71,7 +61,3 @@ create table smt_gateway_request (
     finished boolean not null default false,
     success boolean
 );
-
---rollback drop table _user, _user_credits, _comment, _notification, _task, _user_task, dict_notify_type, dict_task_status;
- -- drop sequence main_id_sequence;
- -- drop function getnextid;

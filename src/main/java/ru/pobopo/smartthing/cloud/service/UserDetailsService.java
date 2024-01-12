@@ -1,7 +1,6 @@
 package ru.pobopo.smartthing.cloud.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -17,8 +16,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-@Scope("singleton")
-public class UserDetailsService {
+public class UserDetailsService implements org.springframework.security.core.userdetails.UserDetailsService {
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;
 

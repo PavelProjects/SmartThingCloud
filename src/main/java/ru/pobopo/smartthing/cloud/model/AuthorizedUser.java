@@ -9,14 +9,16 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
 
+import javax.security.auth.Subject;
 import java.io.Serializable;
+import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Getter
 @Setter
 @Builder
-public class AuthorizedUser implements Serializable {
+public class AuthorizedUser implements Serializable, Principal {
     private final static String CLAIM_TOKEN_TYPE = "token_type";
     private final static String CLAIM_USER_ID = "user_id";
     private final static String CLAIM_USER_LOGIN = "user_login";
@@ -114,5 +116,15 @@ public class AuthorizedUser implements Serializable {
             user.getLogin(),
             gateway != null ? gateway.getId() : ""
         );
+    }
+
+    @Override
+    public String getName() {
+        return tokenType.equals(TokenType.GATEWAY) && gateway != null ? gateway.getId() : user.getLogin();
+    }
+
+    @Override
+    public boolean implies(Subject subject) {
+        return Principal.super.implies(subject);
     }
 }

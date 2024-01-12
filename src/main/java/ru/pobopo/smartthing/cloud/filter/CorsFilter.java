@@ -1,18 +1,13 @@
 package ru.pobopo.smartthing.cloud.filter;
 
-import java.io.IOException;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
+
+import javax.servlet.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 @Slf4j
 @Component
@@ -32,7 +27,7 @@ public class CorsFilter implements Filter {
         response.setHeader("Access-Control-Max-Age", "7200");
         response.setHeader("Access-Control-Allow-Headers", "Content-Type, Accept, X-Requested-With, remember-me");
 
-        log.debug("Request [{}]{} from {}", request.getMethod(), request.getContextPath(), origin);
+        log.debug("Request [{}]{} from {}", request.getMethod(), request.getServletPath(), origin);
 
         chain.doFilter(req, res);
     }

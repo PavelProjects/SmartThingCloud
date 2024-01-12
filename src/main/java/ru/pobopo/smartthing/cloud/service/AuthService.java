@@ -20,6 +20,7 @@ import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
 import ru.pobopo.smartthing.cloud.model.TokenType;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.repository.UserRepository;
+import ru.pobopo.smartthing.cloud.stomp.GatewayCommand;
 
 import javax.naming.AuthenticationException;
 import java.util.List;
@@ -34,7 +35,7 @@ public class AuthService {
     private final GatewayRepository gatewayRepository;
     private final JwtTokenUtil jwtTokenUtil;
     private final JedisPool jedisPool;
-    private final GatewayBrokerService gatewayBrokerService;
+    private final GatewayRequestService gatewayRequestService;
 
     @Value("${jwt.token.ttl}")
     private long tokenTimeToLive;
@@ -45,12 +46,12 @@ public class AuthService {
             GatewayRepository gatewayRepository,
             JwtTokenUtil jwtTokenUtil,
             JedisPool jedisPool,
-            GatewayBrokerService gatewayBrokerService) {
+            GatewayRequestService gatewayRequestService) {
         this.userRepository = userRepository;
         this.gatewayRepository = gatewayRepository;
         this.jwtTokenUtil = jwtTokenUtil;
         this.jedisPool = jedisPool;
-        this.gatewayBrokerService = gatewayBrokerService;
+        this.gatewayRequestService = gatewayRequestService;
     }
 
     public AuthorizedUser authorizeUser(Authentication authentication) {
@@ -93,13 +94,6 @@ public class AuthService {
                 gatewayId,
                 days > 0 ? days : "[inf]"
         );
-
-        try {
-            gatewayBrokerService.addResponseListener(gateway);
-        } catch (Exception exception) {
-            throw new RuntimeException("Failed to add queue response listener", exception);
-        }
-
         return token;
     }
 
@@ -135,7 +129,7 @@ public class AuthService {
 
         try {
             log.warn("Trying to publish gateway logout event");
-            gatewayBrokerService.gatewayLogout(gateway);
+            gatewayRequestService.sendCommand(gateway, GatewayCommand.LOGOUT);
         } catch (Exception e) {
             log.error("Failed to publish gateway login event", e);
         }

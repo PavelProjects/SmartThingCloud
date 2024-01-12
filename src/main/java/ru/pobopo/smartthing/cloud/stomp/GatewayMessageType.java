@@ -1,4 +1,4 @@
-package ru.pobopo.smartthing.cloud.rabbitmq;
+package ru.pobopo.smartthing.cloud.stomp;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;
@@ -7,7 +7,7 @@ public enum GatewayMessageType {
     DEVICE_REQUEST("device_request"),
     GATEWAY_COMMAND("gateway_command");
 
-    private String type;
+    private final String type;
     GatewayMessageType(String type) {
         this.type = type;
     }
