@@ -104,12 +104,16 @@ public class GatewayRequestService {
                 message
         );
         log.info("User {} sent request {}", user, message);
-        resultsMap.put(requestEntity.getId(), requestEntity);
-        synchronized (resultsMap.get(requestEntity.getId())) {
-            resultsMap.get(requestEntity.getId()).wait(5000);
+
+        if (message.isNeedResponse()) {
+            resultsMap.put(requestEntity.getId(), requestEntity);
+            synchronized (resultsMap.get(requestEntity.getId())) {
+                resultsMap.get(requestEntity.getId()).wait(5000);
+            }
+            return resultsMap.remove(requestEntity.getId());
         }
 
-        return resultsMap.get(requestEntity.getId());
+        return requestEntity;
     }
 
     public void processResponse(MessageResponse response) {

@@ -22,7 +22,9 @@ import javax.naming.AuthenticationException;
 import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -93,7 +95,19 @@ public class GatewayAuthService {
             throw new ValidationException("There is not token for gateway " + gatewayId);
         }
         gatewayTokenRepository.delete(tokenEntity.get());
-        requestService.sendMessage(gatewayId, new GatewayCommandMessage(GatewayCommand.LOGOUT.getName(), null));
+
+        GatewayCommandMessage message = new GatewayCommandMessage(GatewayCommand.LOGOUT.getName(), null);
+        message.setNeedResponse(false);
+        requestService.sendMessage(gatewayId, message);
+    }
+
+    public Map<String, GatewayTokenEntity> getTokens(List<GatewayEntity> gateways) {
+        if (gateways == null || gateways.isEmpty()) {
+            return Map.of();
+        }
+
+        List<GatewayTokenEntity> tokens = gatewayTokenRepository.findByGatewayIn(gateways);
+        return tokens.stream().collect(Collectors.toMap(((tok) -> tok.getGateway().getId()), ((tok) -> tok)));
     }
 
     private void saveToken(AuthorizedUser authorizedUser, String token) {

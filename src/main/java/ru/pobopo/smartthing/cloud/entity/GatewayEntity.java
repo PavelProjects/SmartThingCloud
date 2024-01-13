@@ -35,7 +35,8 @@ public class GatewayEntity {
         joinColumns = @JoinColumn(
             name = "gateway_id", referencedColumnName = "id"),
         inverseJoinColumns = @JoinColumn(
-            name = "user_id", referencedColumnName = "id"))
+            name = "user_id", referencedColumnName = "id")
+    )
     private UserEntity owner;
 
     @Override

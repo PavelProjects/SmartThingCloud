@@ -8,4 +8,5 @@ public class GatewayDto {
     private String name;
     private String description;
     private boolean online;
+    private boolean haveToken;
 }

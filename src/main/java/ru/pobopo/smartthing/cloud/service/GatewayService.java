@@ -77,10 +77,6 @@ public class GatewayService {
         return gatewayRepository.findByOwnerLogin(AuthorisationUtils.getCurrentUser().getLogin());
     }
 
-    public GatewayEntity getUserGatewayByName(String name) throws AuthenticationException {
-        return gatewayRepository.findByNameAndOwnerLogin(name, AuthorisationUtils.getCurrentUser().getLogin());
-    }
-
     public GatewayEntity getGateway(String id) throws AccessDeniedException, ValidationException, AuthenticationException {
         return getGatewayWithValidation(id);
     }
@@ -107,7 +103,7 @@ public class GatewayService {
         if (StringUtils.isBlank(name)) {
             throw new ValidationException("Gateway name can't be empty!");
         }
-        GatewayEntity entity = getUserGatewayByName(name);
+        GatewayEntity entity = gatewayRepository.findByNameAndOwnerLogin(name, AuthorisationUtils.getCurrentUser().getLogin());
         if (entity != null && old != null && !StringUtils.equals(old.getId(), entity.getId())) {
             throw new ValidationException("Current user already have gateway with name " + name);
         }

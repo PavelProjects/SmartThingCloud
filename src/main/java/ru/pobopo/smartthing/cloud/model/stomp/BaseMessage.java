@@ -9,6 +9,7 @@ public class BaseMessage {
     private final GatewayMessageType type;
     private String requestId;
     private boolean cacheable = true;
+    private boolean needResponse = true;
 
     public BaseMessage(GatewayMessageType type) {
         this.type = type;
