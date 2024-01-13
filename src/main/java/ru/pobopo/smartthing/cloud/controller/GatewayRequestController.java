@@ -1,5 +1,6 @@
 package ru.pobopo.smartthing.cloud.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -12,6 +13,7 @@ import ru.pobopo.smartthing.cloud.entity.GatewayRequestEntity;
 import ru.pobopo.smartthing.cloud.exception.CommandNotAllowed;
 import ru.pobopo.smartthing.cloud.mapper.GatewayRequestMapper;
 import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
+import ru.pobopo.smartthing.cloud.model.stomp.DeviceRequestMessage;
 import ru.pobopo.smartthing.cloud.model.stomp.GatewayCommand;
 import ru.pobopo.smartthing.cloud.model.stomp.GatewayNotification;
 import ru.pobopo.smartthing.cloud.model.stomp.MessageResponse;
@@ -46,7 +48,7 @@ public class GatewayRequestController {
 
         GatewayRequestEntity entity = requestService.sendMessage(
                 deviceRequest.getGatewayId(),
-                deviceRequest.toDeviceRequest()
+                new DeviceRequestMessage(deviceRequest.getRequest())
         );
         return gatewayRequestMapper.toDto(entity);
     }
@@ -68,7 +70,7 @@ public class GatewayRequestController {
 
     @RequiredRole(roles = GATEWAY)
     @PostMapping("/response")
-    public void sendResponse(@RequestBody MessageResponse response) {
+    public void sendResponse(@RequestBody MessageResponse response) throws JsonProcessingException {
         Objects.requireNonNull(response);
 
         requestService.processResponse(response);

@@ -1,5 +1,7 @@
 package ru.pobopo.smartthing.cloud.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +40,7 @@ public class GatewayRequestService {
     private final GatewayMapper gatewayMapper;
 
     private final Map<String, GatewayRequestEntity> resultsMap = new ConcurrentHashMap<>();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public List<GatewayRequestEntity> getUserRequests(int page, int size) throws AuthenticationException {
         return requestRepository.findByUser(AuthorisationUtils.getCurrentUser(), PageRequest.of(page, size, Sort.by("sentDate").descending()));
@@ -116,7 +119,7 @@ public class GatewayRequestService {
         return requestEntity;
     }
 
-    public void processResponse(MessageResponse response) {
+    public void processResponse(MessageResponse response) throws JsonProcessingException {
         Objects.requireNonNull(response);
         if (StringUtils.isBlank(response.getRequestId())) {
             throw new RuntimeException("Request id is missing!");
@@ -127,7 +130,9 @@ public class GatewayRequestService {
         }
 
         GatewayRequestEntity entity = requestEntity.get();
-        entity.setResult(response.getResponse());
+        entity.setResult(
+                response.getResponse() != null ? objectMapper.writeValueAsString(response.getResponse()) : response.getError()
+        );
         entity.setSuccess(response.isSuccess());
         entity.setFinished(true);
         entity.setReceiveDate(LocalDateTime.now());
@@ -163,7 +168,7 @@ public class GatewayRequestService {
 
     private <T extends BaseMessage> String getTarget(GatewayEntity gateway, T message) {
         if (message instanceof DeviceRequestMessage) {
-            return ((DeviceRequestMessage) message).getTarget();
+            return ((DeviceRequestMessage) message).getRequest().getTarget().getIp();
         }
         return gateway.getId();
     }
