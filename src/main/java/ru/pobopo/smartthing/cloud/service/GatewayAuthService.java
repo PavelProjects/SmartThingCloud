@@ -110,6 +110,10 @@ public class GatewayAuthService {
         return tokens.stream().collect(Collectors.toMap(((tok) -> tok.getGateway().getId()), ((tok) -> tok)));
     }
 
+    public GatewayTokenEntity getToken(GatewayEntity gateway) {
+        return gatewayTokenRepository.findByGateway(gateway).orElse(null);
+    }
+
     private void saveToken(AuthorizedUser authorizedUser, String token) {
         GatewayTokenEntity gatewayToken = new GatewayTokenEntity();
         gatewayToken.setToken(token);

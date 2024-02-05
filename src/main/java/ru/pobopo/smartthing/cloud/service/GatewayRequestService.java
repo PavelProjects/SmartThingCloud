@@ -168,7 +168,7 @@ public class GatewayRequestService {
 
     private <T extends BaseMessage> String getTarget(GatewayEntity gateway, T message) {
         if (message instanceof DeviceRequestMessage) {
-            return ((DeviceRequestMessage) message).getRequest().getTarget().getIp();
+            return ((DeviceRequestMessage) message).getRequest().getDevice().getIp();
         }
         return gateway.getId();
     }

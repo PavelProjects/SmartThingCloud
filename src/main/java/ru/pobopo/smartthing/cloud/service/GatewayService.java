@@ -61,14 +61,16 @@ public class GatewayService {
     public void deleteGateway(String id)
             throws Exception {
         GatewayEntity entity = getGatewayWithValidation(id);
-        log.warn("Deleting gateway {}", entity);
+        log.warn("Trying to delete gateway {}", entity);
+
+        log.warn("Gateway logout {}", entity);
+        authService.logout(id);
 
         log.warn("Deleting gateway's requests");
-        requestRepository.deleteByGateway(entity);
+        requestRepository.deleteAllByGateway(entity);
 
+        log.warn("Deleting gateway {}", entity);
         gatewayRepository.delete(entity);
-
-        authService.logout(id);
 
         log.warn("Gateway {} was deleted!", entity);
     }

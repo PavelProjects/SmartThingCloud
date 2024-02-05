@@ -75,8 +75,10 @@ public class GatewayManagementController {
     @RequiredRole(roles = USER)
     @GetMapping("/{id}")
     public GatewayDto getById(@PathVariable String id) throws AccessDeniedException, ValidationException, AuthenticationException {
-        GatewayDto gatewayDto = gatewayMapper.toDto(gatewayService.getGateway(id));
+        GatewayEntity gateway = gatewayService.getGateway(id);
+        GatewayDto gatewayDto = gatewayMapper.toDto(gateway);
         gatewayDto.setOnline(userRegistry.getUser(gatewayDto.getId()) != null);
+        gatewayDto.setHaveToken(gatewayAuthService.getToken(gateway) != null);
         return gatewayDto;
     }
 }
