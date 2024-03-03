@@ -40,7 +40,7 @@ public class UserAuthService {
         );
     }
 
-    public ResponseCookie getUserCookie(AuthorizedUser authorizedUser) {
+    public ResponseCookie buildCookie(AuthorizedUser authorizedUser) {
         ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(
                         USER_COOKIE_NAME,
                         generateToken(authorizedUser)
@@ -48,6 +48,18 @@ public class UserAuthService {
                 .path("/")
                 .maxAge(tokenTimeToLive)
                 .httpOnly(true);
+        return builder.build();
+    }
+
+    public ResponseCookie logoutCookie() {
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(
+                        USER_COOKIE_NAME,
+                        ""
+                )
+                .path("/")
+                .maxAge(1)
+                .httpOnly(true);
+
         return builder.build();
     }
 

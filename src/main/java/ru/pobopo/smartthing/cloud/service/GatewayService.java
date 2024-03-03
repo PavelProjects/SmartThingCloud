@@ -64,7 +64,11 @@ public class GatewayService {
         log.warn("Trying to delete gateway {}", entity);
 
         log.warn("Gateway logout {}", entity);
-        authService.logout(id);
+        try {
+            authService.logout(id);
+        } catch (ValidationException exception) {
+            log.info("Failed to delete gateway token: {}", exception.getMessage());
+        }
 
         log.warn("Deleting gateway's requests");
         requestRepository.deleteAllByGateway(entity);

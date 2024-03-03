@@ -56,7 +56,7 @@ public class AuthenticationController {
             throw new BadCredentialsException("Wrong user credits");
         }
         AuthorizedUser user = userAuthService.authenticate(auth);
-        ResponseCookie responseCookie = userAuthService.getUserCookie(user);
+        ResponseCookie responseCookie = userAuthService.buildCookie(user);
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
         return authorizedUserMapper.toDto(user);
     }
@@ -66,6 +66,12 @@ public class AuthenticationController {
     public TokenResponse authGateway(@RequestBody GatewayTokenRequest request)
         throws ValidationException, AuthenticationException, AccessDeniedException {
         return new TokenResponse(gatewayAuthService.generateToken(request.getGatewayId()));
+    }
+
+    @RequiredRole(roles = USER)
+    @PostMapping("/user/logout")
+    public void userLogout(HttpServletResponse response) {
+        response.addHeader(HttpHeaders.SET_COOKIE, userAuthService.logoutCookie().toString());
     }
 
     @RequiredRole(roles = {USER, GATEWAY})
