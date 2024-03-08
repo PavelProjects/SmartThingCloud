@@ -7,6 +7,7 @@ import org.springframework.messaging.converter.DefaultContentTypeResolver;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -19,7 +20,9 @@ import java.util.List;
 public class StompMessagingConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker( "/topic", "/queue");
+        config.enableSimpleBroker( "/topic", "/queue")
+                .setTaskScheduler(new ThreadPoolTaskScheduler())
+                .setHeartbeatValue(new long[] {10000, 10000});
         config.setUserDestinationPrefix("/secured");
     }
 
