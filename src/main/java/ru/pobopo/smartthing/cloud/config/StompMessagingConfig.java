@@ -21,7 +21,7 @@ public class StompMessagingConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.enableSimpleBroker( "/topic", "/queue")
-                .setTaskScheduler(new ThreadPoolTaskScheduler())
+                .setTaskScheduler(taskScheduler())
                 .setHeartbeatValue(new long[] {10000, 10000});
         config.setUserDestinationPrefix("/secured");
     }
@@ -45,5 +45,12 @@ public class StompMessagingConfig implements WebSocketMessageBrokerConfigurer {
         converter.setContentTypeResolver(resolver);
         messageConverters.add(converter);
         return false;
+    }
+
+    private ThreadPoolTaskScheduler taskScheduler() {
+        ThreadPoolTaskScheduler taskScheduler = new ThreadPoolTaskScheduler();
+        taskScheduler.setPoolSize(10);
+        taskScheduler.initialize();
+        return taskScheduler;
     }
 }
