@@ -1,6 +1,6 @@
 package ru.pobopo.smartthing.cloud.exception;
 
-public class AccessDeniedException extends Exception {
+public class AccessDeniedException extends RuntimeException {
 
     public AccessDeniedException() {
     }

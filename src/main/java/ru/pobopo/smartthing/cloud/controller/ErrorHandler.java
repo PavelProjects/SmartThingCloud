@@ -3,9 +3,6 @@ package ru.pobopo.smartthing.cloud.controller;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.MalformedJwtException;
-import java.io.IOException;
-import java.util.Locale;
-import javax.naming.AuthenticationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -17,11 +14,13 @@ import ru.pobopo.smartthing.cloud.exception.BrokerException;
 import ru.pobopo.smartthing.cloud.exception.CommandNotAllowed;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 
+import javax.naming.AuthenticationException;
+import java.io.IOException;
+import java.util.Locale;
+
 @Slf4j
 @RestControllerAdvice
 public class ErrorHandler {
-
-    // todo setup around
 
     static{
         Locale.setDefault(new Locale("en"));
