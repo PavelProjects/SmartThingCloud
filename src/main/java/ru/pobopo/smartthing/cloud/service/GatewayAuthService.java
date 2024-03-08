@@ -88,7 +88,7 @@ public class GatewayAuthService {
     }
 
     @Transactional
-    public void logout(AuthenticatedUser authenticatedUser, String gatewayId) throws Exception {
+    public void logout(String gatewayId) throws Exception {
         GatewayEntity gateway = getGatewayWithValidation(gatewayId);
         Optional<GatewayTokenEntity> tokenEntity = gatewayTokenRepository.findByGateway(gateway);
         if (tokenEntity.isEmpty()) {
@@ -96,7 +96,8 @@ public class GatewayAuthService {
         }
         gatewayTokenRepository.delete(tokenEntity.get());
 
-        if (authenticatedUser.getTokenType().equals(TokenType.USER)) {
+        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (user.getTokenType().equals(TokenType.USER)) {
             GatewayCommandMessage message = new GatewayCommandMessage(GatewayCommand.LOGOUT.getName(), null);
             message.setNeedResponse(false);
             requestService.sendMessage(gatewayId, message);
