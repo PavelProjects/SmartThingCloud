@@ -11,7 +11,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.WebUtils;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.jwt.JwtTokenUtil;
-import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
+import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
 import ru.pobopo.smartthing.cloud.service.GatewayAuthService;
 import ru.pobopo.smartthing.cloud.service.UserAuthService;
 
@@ -45,18 +45,18 @@ public class SecurityFilter extends OncePerRequestFilter {
         );
         if (StringUtils.isNotBlank(token)) {
             try {
-                AuthorizedUser authorizedUser = parseToken(token);
-                switch (authorizedUser.getTokenType()) {
+                AuthenticatedUser authenticatedUser = parseToken(token);
+                switch (authenticatedUser.getTokenType()) {
                     case USER: {
-                        userAuthService.validate(authorizedUser);
+                        userAuthService.validate(authenticatedUser);
                         break;
                     }
                     case GATEWAY: {
-                        gatewayAuthService.validate(authorizedUser, token);
+                        gatewayAuthService.validate(authenticatedUser, token);
                         break;
                     }
                 }
-                setUserDetailsToContext(authorizedUser, request);
+                setUserDetailsToContext(authenticatedUser, request);
             } catch (Exception e) {
                 log.error("Token validation failed: {}", e.getMessage());
             }
@@ -65,21 +65,21 @@ public class SecurityFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private AuthorizedUser parseToken(String token) throws AccessDeniedException {
+    private AuthenticatedUser parseToken(String token) throws AccessDeniedException {
         if (jwtTokenUtil.isTokenExpired(token)) {
             throw new AccessDeniedException("Token expired!");
         }
-        return AuthorizedUser.fromClaims(jwtTokenUtil.getAllClaimsFromToken(token));
+        return AuthenticatedUser.fromClaims(jwtTokenUtil.getAllClaimsFromToken(token));
     }
 
-    private void setUserDetailsToContext(AuthorizedUser authorizedUser, HttpServletRequest request) {
-        if (authorizedUser == null) {
+    private void setUserDetailsToContext(AuthenticatedUser authenticatedUser, HttpServletRequest request) {
+        if (authenticatedUser == null) {
             return;
         }
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-            authorizedUser,
+                authenticatedUser,
             "",
-            authorizedUser.getAuthorities()
+            authenticatedUser.getAuthorities()
         );
         authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);

@@ -11,7 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import ru.pobopo.smartthing.cloud.annotation.RequiredRole;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
-import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
+import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
 import ru.pobopo.smartthing.cloud.model.Role;
 
 import java.lang.reflect.Method;
@@ -50,8 +50,8 @@ public class RequiredRoleAspect {
             log.info(message);
             throw new AccessDeniedException(message);
         }
-        AuthorizedUser authorizedUser = (AuthorizedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Set<String> authorities = authorizedUser.getAuthorities().stream().map(SimpleGrantedAuthority::getAuthority).collect(Collectors.toSet());
+        AuthenticatedUser authenticatedUser = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Set<String> authorities = authenticatedUser.getAuthorities().stream().map(SimpleGrantedAuthority::getAuthority).collect(Collectors.toSet());
 
         if (authorities.contains(Role.ADMIN.getName())) {
             return;

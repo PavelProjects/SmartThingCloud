@@ -16,7 +16,7 @@ import ru.pobopo.smartthing.cloud.entity.GatewayRequestEntity;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.mapper.GatewayMapper;
-import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
+import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
 import ru.pobopo.smartthing.cloud.model.stomp.*;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.repository.GatewayRequestRepository;
@@ -149,10 +149,10 @@ public class GatewayRequestService {
         }
     }
 
-    public void notification(AuthorizedUser authorizedUser, GatewayNotification notification) {
+    public void notification(AuthenticatedUser authenticatedUser, GatewayNotification notification) {
         //impl email, push and etc notifications
 
-        Optional<GatewayEntity> gatewayOpt = gatewayRepository.findById(authorizedUser.getGateway().getId());
+        Optional<GatewayEntity> gatewayOpt = gatewayRepository.findById(authenticatedUser.getGateway().getId());
         if (gatewayOpt.isEmpty()) {
             throw new RuntimeException("Can't find gateway from token!");
         }

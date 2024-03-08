@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 @Builder
-public class AuthorizedUser implements Serializable, Principal {
+public class AuthenticatedUser implements Serializable, Principal {
     private final static String CLAIM_TOKEN_TYPE = "token_type";
     private final static String CLAIM_USER_ID = "user_id";
     private final static String CLAIM_USER_LOGIN = "user_login";
@@ -32,11 +32,11 @@ public class AuthorizedUser implements Serializable, Principal {
     private final Collection<SimpleGrantedAuthority> authorities;
     private final GatewayEntity gateway;
 
-    public static AuthorizedUser build(TokenType tokenType, UserEntity user, Collection<? extends GrantedAuthority> authorities) {
+    public static AuthenticatedUser build(TokenType tokenType, UserEntity user, Collection<? extends GrantedAuthority> authorities) {
         return build(tokenType, user, authorities, null);
     }
     
-    public static AuthorizedUser build(
+    public static AuthenticatedUser build(
         TokenType tokenType,
         UserEntity user,
         Collection<? extends GrantedAuthority> authorities,
@@ -45,7 +45,7 @@ public class AuthorizedUser implements Serializable, Principal {
         Objects.requireNonNull(tokenType);
         Objects.requireNonNull(user);
 
-        AuthorizedUserBuilder builder = new AuthorizedUserBuilder();
+        AuthenticatedUserBuilder builder = new AuthenticatedUserBuilder();
         builder
             .tokenType(tokenType)
             .user(user)
@@ -65,7 +65,7 @@ public class AuthorizedUser implements Serializable, Principal {
         return builder.build();
     }
 
-    public static AuthorizedUser fromClaims(Claims claims) {
+    public static AuthenticatedUser fromClaims(Claims claims) {
         TokenType tokenType = TokenType.fromString((String) claims.get(CLAIM_TOKEN_TYPE));
 
         UserEntity user = new UserEntity();

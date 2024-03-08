@@ -10,7 +10,7 @@ import ru.pobopo.smartthing.cloud.entity.GatewayTokenEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.jwt.JwtTokenUtil;
-import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
+import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
 import ru.pobopo.smartthing.cloud.model.TokenType;
 import ru.pobopo.smartthing.cloud.model.stomp.GatewayCommand;
 import ru.pobopo.smartthing.cloud.model.stomp.GatewayCommandMessage;
@@ -43,8 +43,8 @@ public class GatewayAuthService {
             throw new ValidationException("Gateway already have active token!");
         }
 
-        AuthorizedUser user = (AuthorizedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        AuthorizedUser authorizedUser = AuthorizedUser.build(
+        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AuthenticatedUser authenticatedUser = AuthenticatedUser.build(
                 TokenType.GATEWAY,
                 user.getUser(),
                 List.of(),
@@ -52,33 +52,33 @@ public class GatewayAuthService {
         );
 
         String token = jwtTokenUtil.doGenerateToken(
-                authorizedUser.getTokenType().getName(),
-                authorizedUser.toClaims(),
+                authenticatedUser.getTokenType().getName(),
+                authenticatedUser.toClaims(),
                 -1
         );
-        saveToken(authorizedUser, token);
+        saveToken(authenticatedUser, token);
         log.info(
                 "Authorized user [{}] generated token for gateway [{}]",
-                authorizedUser,
+                authenticatedUser,
                 gatewayId
         );
         return token;
     }
 
-    public void validate(AuthorizedUser authorizedUser, String token) throws AccessDeniedException {
-        if (authorizedUser.getUser() == null) {
+    public void validate(AuthenticatedUser authenticatedUser, String token) throws AccessDeniedException {
+        if (authenticatedUser.getUser() == null) {
             log.error("Missing user in token");
             throw new AccessDeniedException();
         }
-        if (!userRepository.existsById(authorizedUser.getUser().getId())) {
+        if (!userRepository.existsById(authenticatedUser.getUser().getId())) {
             throw new AccessDeniedException("User not found");
         }
 
-        if (authorizedUser.getGateway() == null) {
+        if (authenticatedUser.getGateway() == null) {
             throw new AccessDeniedException();
         }
 
-        Optional<GatewayTokenEntity> tokenEntity = gatewayTokenRepository.findByGateway(authorizedUser.getGateway());
+        Optional<GatewayTokenEntity> tokenEntity = gatewayTokenRepository.findByGateway(authenticatedUser.getGateway());
         if (tokenEntity.isEmpty()) {
             throw new AccessDeniedException();
         }
@@ -88,7 +88,7 @@ public class GatewayAuthService {
     }
 
     @Transactional
-    public void logout(String gatewayId) throws Exception {
+    public void logout(AuthenticatedUser authenticatedUser, String gatewayId) throws Exception {
         GatewayEntity gateway = getGatewayWithValidation(gatewayId);
         Optional<GatewayTokenEntity> tokenEntity = gatewayTokenRepository.findByGateway(gateway);
         if (tokenEntity.isEmpty()) {
@@ -96,9 +96,11 @@ public class GatewayAuthService {
         }
         gatewayTokenRepository.delete(tokenEntity.get());
 
-        GatewayCommandMessage message = new GatewayCommandMessage(GatewayCommand.LOGOUT.getName(), null);
-        message.setNeedResponse(false);
-        requestService.sendMessage(gatewayId, message);
+        if (authenticatedUser.getTokenType().equals(TokenType.USER)) {
+            GatewayCommandMessage message = new GatewayCommandMessage(GatewayCommand.LOGOUT.getName(), null);
+            message.setNeedResponse(false);
+            requestService.sendMessage(gatewayId, message);
+        }
     }
 
     public Map<String, GatewayTokenEntity> getTokens(List<GatewayEntity> gateways) {
@@ -114,11 +116,11 @@ public class GatewayAuthService {
         return gatewayTokenRepository.findByGateway(gateway).orElse(null);
     }
 
-    private void saveToken(AuthorizedUser authorizedUser, String token) {
+    private void saveToken(AuthenticatedUser authenticatedUser, String token) {
         GatewayTokenEntity gatewayToken = new GatewayTokenEntity();
         gatewayToken.setToken(token);
-        gatewayToken.setOwner(authorizedUser.getUser());
-        gatewayToken.setGateway(authorizedUser.getGateway());
+        gatewayToken.setOwner(authenticatedUser.getUser());
+        gatewayToken.setGateway(authenticatedUser.getGateway());
         gatewayToken.setCreationDate(LocalDateTime.now());
         gatewayTokenRepository.save(gatewayToken);
     }

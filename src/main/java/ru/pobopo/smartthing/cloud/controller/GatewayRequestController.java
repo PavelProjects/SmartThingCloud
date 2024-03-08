@@ -12,7 +12,7 @@ import ru.pobopo.smartthing.cloud.dto.GatewayRequestDto;
 import ru.pobopo.smartthing.cloud.entity.GatewayRequestEntity;
 import ru.pobopo.smartthing.cloud.exception.CommandNotAllowed;
 import ru.pobopo.smartthing.cloud.mapper.GatewayRequestMapper;
-import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
+import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
 import ru.pobopo.smartthing.cloud.model.stomp.DeviceRequestMessage;
 import ru.pobopo.smartthing.cloud.model.stomp.GatewayCommand;
 import ru.pobopo.smartthing.cloud.model.stomp.GatewayNotification;
@@ -79,12 +79,12 @@ public class GatewayRequestController {
     @RequiredRole(roles = GATEWAY)
     @PostMapping("/notification")
     public void notification(
-            @AuthenticationPrincipal AuthorizedUser authorizedUser,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
             @RequestBody GatewayNotification notification
     ) {
         Objects.requireNonNull(notification);
 
-        requestService.notification(authorizedUser, notification);
+        requestService.notification(authenticatedUser, notification);
     }
 
     // todo filtration by gateway, date, status and etc

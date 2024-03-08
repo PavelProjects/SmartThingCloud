@@ -17,7 +17,7 @@ import ru.pobopo.smartthing.cloud.dto.AuthorizedUserDto;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.mapper.AuthorizedUserMapper;
-import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
+import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
 import ru.pobopo.smartthing.cloud.service.GatewayAuthService;
 import ru.pobopo.smartthing.cloud.service.UserAuthService;
 
@@ -39,9 +39,9 @@ public class AuthenticationController {
     @RequiredRole(roles = {USER, GATEWAY})
     @GetMapping
     public AuthorizedUserDto authorizedUser(
-            @AuthenticationPrincipal AuthorizedUser authorizedUser
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
-        return authorizedUserMapper.toDto(authorizedUser);
+        return authorizedUserMapper.toDto(authenticatedUser);
     }
 
     @PostMapping("/user")
@@ -55,7 +55,7 @@ public class AuthenticationController {
         if (!auth.isAuthenticated()) {
             throw new BadCredentialsException("Wrong user credits");
         }
-        AuthorizedUser user = userAuthService.authenticate(auth);
+        AuthenticatedUser user = userAuthService.authenticate(auth);
         ResponseCookie responseCookie = userAuthService.buildCookie(user);
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
         return authorizedUserMapper.toDto(user);
@@ -76,7 +76,10 @@ public class AuthenticationController {
 
     @RequiredRole(roles = {USER, GATEWAY})
     @PostMapping("/gateway/logout")
-    public void gatewayLogout(@RequestBody GatewayTokenRequest request) throws Exception {
-        gatewayAuthService.logout(request.getGatewayId());
+    public void gatewayLogout(
+            @RequestBody GatewayTokenRequest request,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) throws Exception {
+        gatewayAuthService.logout(authenticatedUser, request.getGatewayId());
     }
 }

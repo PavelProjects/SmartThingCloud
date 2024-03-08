@@ -5,7 +5,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
-import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
+import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
 import ru.pobopo.smartthing.cloud.model.Role;
 
 import javax.naming.AuthenticationException;
@@ -39,7 +39,7 @@ public class AuthorisationUtils {
         if (gatewayEntity == null || gatewayEntity.getOwner() == null) {
             return false;
         }
-        AuthorizedUser authentication = getAuthorizedUser();
+        AuthenticatedUser authentication = getAuthorizedUser();
         return isSameUser(authentication, gatewayEntity.getOwner()) ||
                 checkAuthority(authentication, List.of(Role.ADMIN.getName(), GATEWAY_ADMIN_ROLE));
     }
@@ -48,7 +48,7 @@ public class AuthorisationUtils {
      * Проверяет наличие прав у юзера
      * @param authorities набор прав, которые должны быть у юзера для получения доступа
      */
-    private static boolean checkAuthority(AuthorizedUser authentication, Collection<String> authorities) {
+    private static boolean checkAuthority(AuthenticatedUser authentication, Collection<String> authorities) {
         Collection<? extends GrantedAuthority> userAuthorities = authentication.getAuthorities();
         if (userAuthorities == null || userAuthorities.isEmpty() || userAuthorities.size() < authorities.size()) {
             return false;
@@ -56,13 +56,13 @@ public class AuthorisationUtils {
         return authorities.containsAll(userAuthorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
     }
 
-    private static boolean isSameUser(AuthorizedUser authentication, UserEntity user) {
+    private static boolean isSameUser(AuthenticatedUser authentication, UserEntity user) {
         return authentication.getUser().equals(user);
     }
 
     @NotNull
-    public static AuthorizedUser getAuthorizedUser() throws AuthenticationException {
-        AuthorizedUser currentUser = (AuthorizedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    public static AuthenticatedUser getAuthorizedUser() throws AuthenticationException {
+        AuthenticatedUser currentUser = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (currentUser == null || currentUser.getUser() == null) {
             throw new AuthenticationException("Current user didn't authenticate!");
         }

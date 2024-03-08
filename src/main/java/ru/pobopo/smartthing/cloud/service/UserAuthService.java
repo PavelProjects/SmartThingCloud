@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.jwt.JwtTokenUtil;
-import ru.pobopo.smartthing.cloud.model.AuthorizedUser;
+import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
 import ru.pobopo.smartthing.cloud.model.TokenType;
 import ru.pobopo.smartthing.cloud.repository.UserRepository;
 
@@ -26,24 +26,24 @@ public class UserAuthService {
     @Value("${jwt.token.ttl}")
     private long tokenTimeToLive;
 
-    public AuthorizedUser authenticate(Authentication authentication) {
+    public AuthenticatedUser authenticate(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         UserEntity user = userRepository.findByLogin(userDetails.getUsername());
-        return AuthorizedUser.build(TokenType.USER, user, userDetails.getAuthorities());
+        return AuthenticatedUser.build(TokenType.USER, user, userDetails.getAuthorities());
     }
 
-    public String generateToken(AuthorizedUser authorizedUser) {
+    public String generateToken(AuthenticatedUser authenticatedUser) {
         return jwtTokenUtil.doGenerateToken(
-                authorizedUser.getTokenType().getName(),
-                authorizedUser.toClaims(),
+                authenticatedUser.getTokenType().getName(),
+                authenticatedUser.toClaims(),
                 tokenTimeToLive
         );
     }
 
-    public ResponseCookie buildCookie(AuthorizedUser authorizedUser) {
+    public ResponseCookie buildCookie(AuthenticatedUser authenticatedUser) {
         ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(
                         USER_COOKIE_NAME,
-                        generateToken(authorizedUser)
+                        generateToken(authenticatedUser)
                 )
                 .path("/")
                 .maxAge(tokenTimeToLive)
@@ -63,12 +63,12 @@ public class UserAuthService {
         return builder.build();
     }
 
-    public void validate(AuthorizedUser authorizedUser) throws AccessDeniedException {
-        if (authorizedUser.getUser() == null) {
+    public void validate(AuthenticatedUser authenticatedUser) throws AccessDeniedException {
+        if (authenticatedUser.getUser() == null) {
             log.error("Missing user in token");
             throw new AccessDeniedException("Bad token");
         }
-        if (!userRepository.existsById(authorizedUser.getUser().getId())) {
+        if (!userRepository.existsById(authenticatedUser.getUser().getId())) {
             throw new AccessDeniedException("User not found");
         }
     }
