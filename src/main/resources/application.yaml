@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://192.168.2.170:5432/smartthing
+    username: admin
+    password: adminbruh
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+  liquibase:
+    enabled: true
+    change-log: classpath:liquibase/dbchangelog.xml
+
+logginglevel:
+  ru.pobopo.smartthing.cloud: DEBUG
+  org.hibernate: Error
+
+jwt:
+  token:
+    secret: ${JWT_SECRET:}
+    ttl: ${JWT_TOKEN_TTL:3600}
+
+users:
+  - {login: '${ADMIN_LOGIN:}', password: '${ADMIN_PASSWORD:}', role: 'admin'}
+  - {login: 'guest', password: '123', role: 'user'}

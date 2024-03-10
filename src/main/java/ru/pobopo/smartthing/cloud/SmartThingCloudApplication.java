@@ -1,15 +1,16 @@
 package ru.pobopo.smartthing.cloud;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.core.env.Environment;
+import ru.pobopo.smartthing.cloud.config.UserConfig;
+import ru.pobopo.smartthing.cloud.config.UsersSettings;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
-import ru.pobopo.smartthing.cloud.model.Role;
 import ru.pobopo.smartthing.cloud.service.UserService;
+
+import java.util.List;
 
 @Slf4j
 @SpringBootApplication
@@ -21,17 +22,23 @@ public class SmartThingCloudApplication {
     }
 
     @Bean
-    CommandLineRunner run(Environment environment, UserService userService)  {
+    CommandLineRunner run(UserService userService, UsersSettings usersSettings)  {
         return args -> {
-            String login = environment.getProperty("admin.login", "admin");
-            String password = environment.getProperty("admin.password", "admin");
-
-            if (StringUtils.isBlank(login)) {
+            List<UserConfig> users = usersSettings.getUsers();
+            if (users == null || users.isEmpty()) {
+                log.warn("No users provided");
                 return;
             }
+            users.forEach((user) -> {
+                try {
+                    UserEntity userEntity = userService.createUser(user.getLogin(), user.getPassword());
+                    userService.grantUserRole(userEntity, user.getRole().getName());
+                    log.info("Added user login={}, id={}", userEntity.getLogin(), userEntity.getId());
+                } catch (Exception exception) {
+                    log.error("Failed to create user {}: {}", user.getLogin(), exception.getMessage(), exception);
+                }
+            });
 
-            UserEntity adminUser = userService.createUser(login, password);
-            userService.grantUserRole(adminUser, Role.ADMIN.getName());
         };
     }
 }
