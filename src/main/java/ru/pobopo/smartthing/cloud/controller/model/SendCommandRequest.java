@@ -1,7 +1,7 @@
 package ru.pobopo.smartthing.cloud.controller.model;
 
 import lombok.Data;
-import ru.pobopo.smartthing.cloud.model.stomp.GatewayCommandMessage;
+import ru.pobopo.smartthing.model.stomp.GatewayCommandMessage;
 
 import java.util.Map;
 

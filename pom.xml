@@ -128,6 +128,11 @@
             <artifactId>liquibase-core</artifactId>
             <version>4.23.0</version>
         </dependency>
+        <dependency>
+            <groupId>ru.pobopo</groupId>
+            <artifactId>smart_thing_api_common</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>

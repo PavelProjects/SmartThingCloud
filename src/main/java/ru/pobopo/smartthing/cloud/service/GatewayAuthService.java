@@ -12,11 +12,11 @@ import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.jwt.JwtTokenUtil;
 import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
 import ru.pobopo.smartthing.cloud.model.TokenType;
-import ru.pobopo.smartthing.cloud.model.stomp.GatewayCommand;
-import ru.pobopo.smartthing.cloud.model.stomp.GatewayCommandMessage;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.repository.GatewayTokenRepository;
 import ru.pobopo.smartthing.cloud.repository.UserRepository;
+import ru.pobopo.smartthing.model.stomp.GatewayCommand;
+import ru.pobopo.smartthing.model.stomp.GatewayCommandMessage;
 
 import javax.naming.AuthenticationException;
 import javax.transaction.Transactional;

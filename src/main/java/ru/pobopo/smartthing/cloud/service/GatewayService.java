@@ -11,7 +11,6 @@ import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
-import ru.pobopo.smartthing.cloud.repository.GatewayRequestRepository;
 
 import javax.naming.AuthenticationException;
 import javax.validation.constraints.NotNull;
@@ -24,7 +23,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class GatewayService {
     private final GatewayRepository gatewayRepository;
-    private final GatewayRequestRepository requestRepository;
     private final GatewayAuthService authService;
 
     public GatewayEntity createGateway(String name, String description)
@@ -69,9 +67,6 @@ public class GatewayService {
         } catch (ValidationException exception) {
             log.info("Failed to delete gateway token: {}", exception.getMessage());
         }
-
-        log.warn("Deleting gateway's requests");
-        requestRepository.deleteAllByGateway(entity);
 
         log.warn("Deleting gateway {}", entity);
         gatewayRepository.delete(entity);

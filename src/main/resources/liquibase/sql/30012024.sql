@@ -48,16 +48,3 @@ create table smt_gateway_owner (
     gateway_id char(8) not null references smt_gateway(id),
     unique(user_id, gateway_id)
 );
-
-create table smt_gateway_request (
-    id char(8) primary key default getnextid(),
-    sent_date timestamp with time zone not null default now(),
-    receive_date timestamp with time zone,
-    user_id char(8) not null references smt_user(id),
-    gateway_id char(8) not null references smt_gateway(id),
-    target char(32),
-    message text,
-    result text,
-    finished boolean not null default false,
-    success boolean
-);
