@@ -12,13 +12,17 @@ import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
 import ru.pobopo.smartthing.cloud.model.ResponseMessageHolder;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.model.GatewayInfo;
-import ru.pobopo.smartthing.model.stomp.*;
+import ru.pobopo.smartthing.model.InternalHttpResponse;
+import ru.pobopo.smartthing.model.stomp.BaseMessage;
+import ru.pobopo.smartthing.model.stomp.GatewayNotification;
+import ru.pobopo.smartthing.model.stomp.ResponseMessage;
 
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
 
 @Component
 @Slf4j
@@ -29,27 +33,13 @@ public class GatewayRequestService {
 
     private final Map<UUID, ResponseMessageHolder> resultsMap = new ConcurrentHashMap<>();
 
-    public void sendCommand(GatewayEntity entity, GatewayCommand command) {
-        if (entity == null) {
-            log.error("Gateway is missing!");
-            return;
-        }
-
-        try {
-            log.info("Trying to send logout event to [{}]", entity);
-            GatewayCommandMessage commandRequest = new GatewayCommandMessage(command.name(), null);
-            sendMessage(entity, commandRequest);
-        } catch (Exception exception) {
-            log.error("Failed to send logout message: {}", exception.getMessage());
-        }
-    }
-
-    public <T extends BaseMessage> ResponseMessage sendMessage(String gatewayId, T message) throws Exception {
+    public <T extends BaseMessage> InternalHttpResponse sendMessage(String gatewayId, T message) throws Exception {
         Optional<GatewayEntity> gateway = gatewayRepository.findById(gatewayId);
         if (gateway.isEmpty()) {
             throw new NotFoundException("Gateway with id " + gatewayId + " not found!");
         }
-        return sendMessage(gateway.get(), message);
+        ResponseMessage responseMessage = sendMessage(gateway.get(), message);
+        return responseMessage.getResponse();
     }
 
     @Transactional
@@ -71,21 +61,27 @@ public class GatewayRequestService {
 
         resultsMap.put(message.getId(), new ResponseMessageHolder());
         synchronized (resultsMap.get(message.getId())) {
-            resultsMap.get(message.getId()).wait(15000);
+            resultsMap.get(message.getId()).wait(5000);
         }
-        return resultsMap.remove(message.getId()).getResponse();
+        ResponseMessage responseMessage = resultsMap.remove(message.getId()).getResponseMessage();
+        if (responseMessage == null) {
+            throw new TimeoutException("Failed to obtain response from gateway - timeout");
+        }
+        return responseMessage;
     }
 
     public void processResponse(ResponseMessage response) {
         Objects.requireNonNull(response);
-        Objects.requireNonNull(response.getRequestId());
+        if (response.getRequestId() == null) {
+            return;
+        }
 
         UUID id = response.getRequestId();
         log.info("Request id={} finished", id);
 
         if (resultsMap.containsKey(id)) {
             synchronized (resultsMap.get(id)) {
-                resultsMap.get(id).setResponse(response);
+                resultsMap.get(id).setResponseMessage(response);
                 resultsMap.get(id).notify();
             }
         }

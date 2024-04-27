@@ -2,6 +2,8 @@ package ru.pobopo.smartthing.cloud.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,6 +15,7 @@ import ru.pobopo.smartthing.cloud.controller.model.SendDeviceRequest;
 import ru.pobopo.smartthing.cloud.exception.CommandNotAllowed;
 import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
 import ru.pobopo.smartthing.cloud.service.GatewayRequestService;
+import ru.pobopo.smartthing.model.InternalHttpResponse;
 import ru.pobopo.smartthing.model.stomp.DeviceRequestMessage;
 import ru.pobopo.smartthing.model.stomp.GatewayCommand;
 import ru.pobopo.smartthing.model.stomp.GatewayNotification;
@@ -31,27 +34,30 @@ public class GatewayRequestController {
 
     @RequiredRole(roles = USER)
     @PostMapping("/device")
-    public ResponseMessage sendRequest(@RequestBody SendDeviceRequest deviceRequest) throws Exception {
+    public ResponseEntity<String> sendRequest(@RequestBody SendDeviceRequest deviceRequest) throws Exception {
         Objects.requireNonNull(deviceRequest);
 
-        return requestService.sendMessage(
+        InternalHttpResponse response = requestService.sendMessage(
                 deviceRequest.getGatewayId(),
                 new DeviceRequestMessage(deviceRequest.getRequest())
         );
+        return new ResponseEntity<>(response.getData(), HttpStatus.valueOf(response.getStatus()));
     }
 
     @RequiredRole(roles = USER)
     @PostMapping("/command")
-    public ResponseMessage sendCommand(@RequestBody SendCommandRequest messageRequest) throws Exception {
+    public ResponseEntity<String> sendCommand(@RequestBody SendCommandRequest messageRequest) throws Exception {
         Objects.requireNonNull(messageRequest);
         if (StringUtils.equals(messageRequest.getCommand(), GatewayCommand.LOGOUT.getName())) {
-            throw new CommandNotAllowed("Command logout not allowed");
+            // todo filter all incoming commands
+            throw new CommandNotAllowed("Command not allowed");
         }
 
-        return requestService.sendMessage(
+        InternalHttpResponse response = requestService.sendMessage(
             messageRequest.getGatewayId(),
             messageRequest.toGatewayCommand()
         );
+        return new ResponseEntity<>(response.getData(), HttpStatus.valueOf(response.getStatus()));
     }
 
     @RequiredRole(roles = GATEWAY)

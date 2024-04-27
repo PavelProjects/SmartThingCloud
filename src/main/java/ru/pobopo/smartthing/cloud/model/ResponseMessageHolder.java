@@ -5,5 +5,5 @@ import ru.pobopo.smartthing.model.stomp.ResponseMessage;
 
 @Data
 public class ResponseMessageHolder {
-    private ResponseMessage response;
+    private ResponseMessage responseMessage;
 }

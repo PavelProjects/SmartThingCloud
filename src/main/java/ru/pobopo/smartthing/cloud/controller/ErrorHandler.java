@@ -17,6 +17,7 @@ import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import javax.naming.AuthenticationException;
 import java.io.IOException;
 import java.util.Locale;
+import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @RestControllerAdvice
@@ -86,6 +87,12 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse commandNotAllowed(CommandNotAllowed exception) {
         log.warn(exception.getMessage());
+        return new ErrorResponse(exception.getMessage());
+    }
+
+    @ExceptionHandler(TimeoutException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse timeout(TimeoutException exception) {
         return new ErrorResponse(exception.getMessage());
     }
 }

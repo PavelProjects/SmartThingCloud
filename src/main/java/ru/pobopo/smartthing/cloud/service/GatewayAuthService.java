@@ -99,7 +99,6 @@ public class GatewayAuthService {
         AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (user.getTokenType().equals(TokenType.USER)) {
             GatewayCommandMessage message = new GatewayCommandMessage(GatewayCommand.LOGOUT.getName(), null);
-            message.setNeedResponse(false);
             requestService.sendMessage(gatewayId, message);
         }
     }
