@@ -58,6 +58,9 @@ public class GatewayRequestService {
                 message
         );
         log.info("User {} sent request {}", AuthorisationUtils.getCurrentUser(), message);
+        if (!message.isNeedResponse()) {
+            return ResponseMessage.builder().response(InternalHttpResponse.builder().status(200).build()).build();
+        }
 
         resultsMap.put(message.getId(), new ResponseMessageHolder());
         synchronized (resultsMap.get(message.getId())) {
