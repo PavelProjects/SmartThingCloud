@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 import ru.pobopo.smartthing.cloud.annotation.RequiredRole;
 import ru.pobopo.smartthing.cloud.controller.model.CreateGatewayRequest;
 import ru.pobopo.smartthing.cloud.dto.GatewayDto;
-import ru.pobopo.smartthing.cloud.dto.GatewayShortDto;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.entity.GatewayTokenEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
@@ -38,16 +37,16 @@ public class GatewayManagementController {
     @RequiredRole(roles = USER)
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
-    public GatewayShortDto createGateway(@RequestBody CreateGatewayRequest request)
+    public GatewayDto createGateway(@RequestBody CreateGatewayRequest request)
             throws AuthenticationException, ValidationException {
         GatewayEntity gatewayEntity = gatewayService.createGateway(request.getName(), request.getDescription());
         Objects.requireNonNull(gatewayEntity);
-        return gatewayMapper.toShortDto(gatewayEntity);
+        return gatewayMapper.toDto(gatewayEntity);
     }
 
     @RequiredRole(roles = USER)
     @PutMapping("/update")
-    public void updateGateway(@RequestBody GatewayShortDto dto)
+    public void updateGateway(@RequestBody GatewayDto dto)
             throws AccessDeniedException, ValidationException, AuthenticationException {
         gatewayService.updateGateway(dto);
     }

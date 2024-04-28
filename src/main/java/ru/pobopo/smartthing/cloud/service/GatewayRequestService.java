@@ -8,14 +8,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.webjars.NotFoundException;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
+import ru.pobopo.smartthing.cloud.exception.GatewayRequestException;
+import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
 import ru.pobopo.smartthing.cloud.model.ResponseMessageHolder;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.model.GatewayInfo;
 import ru.pobopo.smartthing.model.InternalHttpResponse;
-import ru.pobopo.smartthing.model.stomp.BaseMessage;
-import ru.pobopo.smartthing.model.stomp.GatewayNotification;
-import ru.pobopo.smartthing.model.stomp.ResponseMessage;
+import ru.pobopo.smartthing.model.stomp.*;
 
 import java.util.Map;
 import java.util.Objects;
@@ -70,7 +70,12 @@ public class GatewayRequestService {
         if (responseMessage == null) {
             throw new TimeoutException("Failed to obtain response from gateway - timeout");
         }
-        return responseMessage;
+        if (responseMessage.isSuccess()) {
+            log.info("Request id={} finished", message.getId());
+            return responseMessage;
+        }
+        log.error("Gateway request failed: {}", responseMessage);
+        throw new GatewayRequestException(responseMessage);
     }
 
     public void processResponse(ResponseMessage response) {
@@ -80,8 +85,6 @@ public class GatewayRequestService {
         }
 
         UUID id = response.getRequestId();
-        log.info("Request id={} finished", id);
-
         if (resultsMap.containsKey(id)) {
             synchronized (resultsMap.get(id)) {
                 resultsMap.get(id).setResponseMessage(response);
@@ -90,20 +93,37 @@ public class GatewayRequestService {
         }
     }
 
-    public void notification(AuthenticatedUser authenticatedUser, GatewayNotification notification) {
-        //todo impl email, push and etc notifications
-
+    //todo impl email, push and etc notifications
+    public void notification(AuthenticatedUser authenticatedUser, GatewayNotification notification) throws ValidationException {
         Optional<GatewayEntity> gatewayOpt = gatewayRepository.findById(authenticatedUser.getGateway().getId());
         if (gatewayOpt.isEmpty()) {
-            throw new RuntimeException("Can't find gateway from token!");
+            throw new ValidationException("Can't find gateway from token!");
         }
         GatewayEntity gateway = gatewayOpt.get();
         notification.setGateway(new GatewayInfo(gateway.getId(), gateway.getName(), gateway.getDescription()));
-        log.debug("Sending notification to {}: {}", gateway.getOwner(), notification);
+        log.info("Sending notification to {}: {}", gateway.getOwner(), notification);
         stompService.convertAndSendToUser(
             gateway.getOwner().getLogin(),
-            "/queue/notification",
+            "/topic/notification",
             notification
+        );
+    }
+
+    public void event(AuthenticatedUser authenticatedUser, GatewayEventType event) throws ValidationException {
+        Optional<GatewayEntity> gatewayOpt = gatewayRepository.findById(authenticatedUser.getGateway().getId());
+        if (gatewayOpt.isEmpty()) {
+            throw new ValidationException("Can't find gateway from token!");
+        }
+        GatewayEntity gateway = gatewayOpt.get();
+        GatewayEvent gatewayEvent = new GatewayEvent(
+                new GatewayInfo(gateway.getId(), gateway.getName(), gateway.getDescription()),
+                event
+        );
+        log.info("Sending gateway event to {}: {}", gateway.getOwner(), gatewayEvent);
+        stompService.convertAndSendToUser(
+                gateway.getOwner().getLogin(),
+                "/topic/event",
+                gatewayEvent
         );
     }
 }

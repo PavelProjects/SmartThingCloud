@@ -17,6 +17,7 @@ import ru.pobopo.smartthing.cloud.repository.GatewayTokenRepository;
 import ru.pobopo.smartthing.cloud.repository.UserRepository;
 import ru.pobopo.smartthing.model.stomp.GatewayCommand;
 import ru.pobopo.smartthing.model.stomp.GatewayCommandMessage;
+import ru.pobopo.smartthing.model.stomp.GatewayEventType;
 
 import javax.naming.AuthenticationException;
 import javax.transaction.Transactional;
@@ -92,15 +93,17 @@ public class GatewayAuthService {
         GatewayEntity gateway = getGatewayWithValidation(gatewayId);
         Optional<GatewayTokenEntity> tokenEntity = gatewayTokenRepository.findByGateway(gateway);
         if (tokenEntity.isEmpty()) {
-            throw new ValidationException("There is not token for gateway " + gatewayId);
+            throw new ValidationException("There is no token for gateway " + gatewayId);
         }
         gatewayTokenRepository.delete(tokenEntity.get());
 
         AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (user.getTokenType().equals(TokenType.USER)) {
-            GatewayCommandMessage message = new GatewayCommandMessage(GatewayCommand.LOGOUT.getName(), null);
+            GatewayCommandMessage message = new GatewayCommandMessage(GatewayCommand.LOGOUT, null);
             message.setNeedResponse(false);
             requestService.sendMessage(gatewayId, message);
+        } else {
+            requestService.event(user, GatewayEventType.LOGOUT);
         }
     }
 

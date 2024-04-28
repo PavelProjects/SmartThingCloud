@@ -10,9 +10,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.pobopo.smartthing.cloud.controller.model.ErrorResponse;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
-import ru.pobopo.smartthing.cloud.exception.BrokerException;
 import ru.pobopo.smartthing.cloud.exception.CommandNotAllowed;
+import ru.pobopo.smartthing.cloud.exception.GatewayRequestException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
+import ru.pobopo.smartthing.model.stomp.ResponseMessage;
 
 import javax.naming.AuthenticationException;
 import java.io.IOException;
@@ -76,13 +77,6 @@ public class ErrorHandler {
         return new ErrorResponse(exc.getMessage(), exc);
     }
 
-    @ExceptionHandler(BrokerException.class)
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ErrorResponse brokerException(BrokerException exception) {
-        log.warn(exception.getMessage());
-        return new ErrorResponse(exception.getMessage());
-    }
-
     @ExceptionHandler(CommandNotAllowed.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse commandNotAllowed(CommandNotAllowed exception) {
@@ -94,5 +88,19 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse timeout(TimeoutException exception) {
         return new ErrorResponse(exception.getMessage());
+    }
+
+    @ExceptionHandler(GatewayRequestException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse gatewayRequestException(GatewayRequestException exception) {
+        ResponseMessage message = exception.getResponseMessage();
+        return ErrorResponse.builder()
+                .message(String.format(
+                        "Gateway request (id=%s) failed: %s",
+                        message.getRequestId(),
+                        message.getError()
+                ))
+                .stack(message.getStack())
+                .build();
     }
 }

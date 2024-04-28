@@ -6,7 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.webjars.NotFoundException;
-import ru.pobopo.smartthing.cloud.dto.GatewayShortDto;
+import ru.pobopo.smartthing.cloud.dto.GatewayDto;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
@@ -40,18 +40,18 @@ public class GatewayService {
         return gatewayEntity;
     }
 
-    public void updateGateway(GatewayShortDto gatewayShortDto)
+    public void updateGateway(GatewayDto GatewayDto)
         throws ValidationException, AuthenticationException, AccessDeniedException {
-        if (gatewayShortDto == null) {
+        if (GatewayDto == null) {
             throw new ValidationException("Dto is null!");
         }
 
-        GatewayEntity entity = getGatewayWithValidation(gatewayShortDto.getId());
+        GatewayEntity entity = getGatewayWithValidation(GatewayDto.getId());
 
-        validateName(entity, gatewayShortDto.getName());
+        validateName(entity, GatewayDto.getName());
 
-        entity.setName(gatewayShortDto.getName());
-        entity.setDescription(gatewayShortDto.getDescription());
+        entity.setName(GatewayDto.getName());
+        entity.setDescription(GatewayDto.getDescription());
         gatewayRepository.save(entity);
     }
 
