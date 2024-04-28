@@ -103,7 +103,7 @@ public class GatewayAuthService {
             message.setNeedResponse(false);
             requestService.sendMessage(gatewayId, message);
         } else {
-            requestService.event(user, GatewayEventType.LOGOUT);
+            requestService.event(user, GatewayEventType.DISCONNECTED);
         }
     }
 
