@@ -7,7 +7,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import ru.pobopo.smartthing.cloud.annotation.RequiredRole;
 import ru.pobopo.smartthing.cloud.controller.model.SendCommandRequest;
-import ru.pobopo.smartthing.cloud.controller.model.SendDeviceRequest;
 import ru.pobopo.smartthing.cloud.exception.CommandNotAllowed;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
@@ -26,14 +25,14 @@ import static ru.pobopo.smartthing.cloud.model.Role.Constants.USER;
 public class GatewayRequestController {
     private final GatewayRequestService requestService;
 
-    @RequiredRole(roles = USER)
+    @RequiredRole(roles = {USER, GATEWAY})
     @PostMapping("/device")
-    public ResponseEntity<String> sendRequest(@RequestBody SendDeviceRequest deviceRequest) throws Exception {
+    public ResponseEntity<String> sendRequest(@RequestBody DeviceRequest deviceRequest) throws Exception {
         Objects.requireNonNull(deviceRequest);
 
         InternalHttpResponse response = requestService.sendMessage(
                 deviceRequest.getGatewayId(),
-                new DeviceRequestMessage(deviceRequest.getRequest())
+                new DeviceRequestMessage(deviceRequest)
         );
         return new ResponseEntity<>(response.getData(), HttpStatus.valueOf(response.getStatus()));
     }
@@ -53,7 +52,7 @@ public class GatewayRequestController {
 
     @RequiredRole(roles = GATEWAY)
     @PostMapping("/response")
-    public void sendResponse(@RequestBody ResponseMessage response) {
+    public void processResponse(@RequestBody ResponseMessage response) {
         requestService.processResponse(Objects.requireNonNull(response));
     }
 

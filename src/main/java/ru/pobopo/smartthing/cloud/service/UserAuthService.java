@@ -31,7 +31,7 @@ public class UserAuthService {
         UserEntity user = userRepository.findByLogin(userDetails.getUsername());
         return AuthenticatedUser.build(TokenType.USER, user, userDetails.getAuthorities());
     }
-
+    // todo add token key as gateway
     public String generateToken(AuthenticatedUser authenticatedUser) {
         return jwtTokenUtil.doGenerateToken(
                 authenticatedUser.getTokenType().getName(),
