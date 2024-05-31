@@ -1,16 +1,17 @@
 package ru.pobopo.smartthing.cloud.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.GatewayRequestException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
-import ru.pobopo.smartthing.cloud.model.ResponseMessageHolder;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.model.GatewayInfo;
 import ru.pobopo.smartthing.model.InternalHttpResponse;
@@ -21,6 +22,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Exchanger;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 @Component
@@ -29,20 +32,48 @@ import java.util.concurrent.TimeoutException;
 public class GatewayRequestService {
     private final GatewayRepository gatewayRepository;
     private final SimpMessagingTemplate stompService;
+    private final ObjectMapper objectMapper;
 
-    private final Map<UUID, ResponseMessageHolder> resultsMap = new ConcurrentHashMap<>();
+    private final Map<UUID, Exchanger<ResponseMessage>> resultsMap = new ConcurrentHashMap<>();
 
-    public <T extends BaseMessage> InternalHttpResponse sendMessage(String gatewayId, T message) throws Exception {
+    public InternalHttpResponse sendGatewayRequest(String gatewayId, GatewayRequestMessage requestMessage) throws ValidationException {
+        if (StringUtils.isBlank(gatewayId)) {
+            throw new ValidationException("Gateway id is missing!");
+        }
+        Objects.requireNonNull(requestMessage);
+        if (StringUtils.isBlank(requestMessage.getMethod()) || StringUtils.isBlank(requestMessage.getUrl())) {
+            throw new ValidationException("Request method and url is required!");
+        }
+
+        ResponseMessage responseMessage = sendMessage(gatewayId, requestMessage);
+        return objectMapper.convertValue(responseMessage.getData(), InternalHttpResponse.class);
+    }
+
+    public InternalHttpResponse sendDeviceRequest(DeviceRequest request) throws ValidationException {
+        Objects.requireNonNull(request, "Device request is missing!");
+        Objects.requireNonNull(request.getDevice(), "Device info is missing!");
+
+        if (StringUtils.isBlank(request.getGatewayId())) {
+            throw new ValidationException("Gateway id can't be blank!");
+        }
+        if (StringUtils.isBlank(request.getDevice().getIp()) && StringUtils.isBlank(request.getDevice().getName())) {
+            throw new ValidationException("Target device name and ip can't be blank!");
+        }
+
+        ResponseMessage responseMessage = sendMessage(request.getGatewayId(), new DeviceRequestMessage(request));
+        return objectMapper.convertValue(responseMessage.getData(), InternalHttpResponse.class);
+    }
+
+    public <T extends BaseMessage> ResponseMessage sendMessage(String gatewayId, T message) {
         Optional<GatewayEntity> gateway = gatewayRepository.findById(gatewayId);
         if (gateway.isEmpty()) {
             throw new AccessDeniedException("Gateway with id " + gatewayId + " not found!");
         }
-        ResponseMessage responseMessage = sendMessage(gateway.get(), message);
-        return responseMessage.getResponse();
+        return sendMessage(gateway.get(), message);
     }
 
-    @Transactional
-    public <T extends BaseMessage> ResponseMessage sendMessage(GatewayEntity gateway, T message) throws Exception {
+    @SneakyThrows
+    public <T extends BaseMessage> ResponseMessage sendMessage(GatewayEntity gateway, T message) {
         Objects.requireNonNull(gateway, "Gateway entity is missing!");
         Objects.requireNonNull(message, "Message object is missing");
 
@@ -58,26 +89,27 @@ public class GatewayRequestService {
         );
         log.info("User {} sent request {}", AuthorisationUtils.getCurrentUser(), message);
         if (!message.isNeedResponse()) {
-            return ResponseMessage.builder().response(InternalHttpResponse.builder().status(200).build()).build();
+            return ResponseMessage.builder().data(InternalHttpResponse.builder().status(200).build()).build();
         }
-
-        resultsMap.put(message.getId(), new ResponseMessageHolder());
-        synchronized (resultsMap.get(message.getId())) {
-            resultsMap.get(message.getId()).wait(5000);
+        Exchanger<ResponseMessage> exchanger = new Exchanger<>();
+        resultsMap.put(message.getId(), exchanger);
+        try {
+            ResponseMessage responseMessage = exchanger.exchange(null, 5000, TimeUnit.MILLISECONDS);
+            if (responseMessage == null) {
+                throw new TimeoutException("Failed to obtain response from gateway - timeout");
+            }
+            if (responseMessage.isSuccess()) {
+                log.info("Request id={} finished", message.getId());
+                return responseMessage;
+            }
+            log.error("Gateway request failed: {}", responseMessage);
+            throw new GatewayRequestException(responseMessage);
+        } finally {
+            resultsMap.remove(message.getId());
         }
-        ResponseMessage responseMessage = resultsMap.remove(message.getId()).getResponseMessage();
-        if (responseMessage == null) {
-            throw new TimeoutException("Failed to obtain response from gateway - timeout");
-        }
-        if (responseMessage.isSuccess()) {
-            log.info("Request id={} finished", message.getId());
-            return responseMessage;
-        }
-        log.error("Gateway request failed: {}", responseMessage);
-        throw new GatewayRequestException(responseMessage);
     }
 
-    public void processResponse(ResponseMessage response) {
+    public void processResponse(ResponseMessage response) throws InterruptedException, TimeoutException {
         Objects.requireNonNull(response);
         if (response.getRequestId() == null) {
             return;
@@ -85,10 +117,7 @@ public class GatewayRequestService {
 
         UUID id = response.getRequestId();
         if (resultsMap.containsKey(id)) {
-            synchronized (resultsMap.get(id)) {
-                resultsMap.get(id).setResponseMessage(response);
-                resultsMap.get(id).notify();
-            }
+            resultsMap.get(id).exchange(response, 5000, TimeUnit.MILLISECONDS);
         }
     }
 

@@ -15,6 +15,7 @@ import ru.pobopo.smartthing.model.InternalHttpResponse;
 import ru.pobopo.smartthing.model.stomp.*;
 
 import java.util.Objects;
+import java.util.concurrent.TimeoutException;
 
 import static ru.pobopo.smartthing.cloud.model.Role.Constants.GATEWAY;
 import static ru.pobopo.smartthing.cloud.model.Role.Constants.USER;
@@ -25,34 +26,38 @@ import static ru.pobopo.smartthing.cloud.model.Role.Constants.USER;
 public class GatewayRequestController {
     private final GatewayRequestService requestService;
 
-    @RequiredRole(roles = {USER, GATEWAY})
-    @PostMapping("/device")
-    public ResponseEntity<String> sendRequest(@RequestBody DeviceRequest deviceRequest) throws Exception {
-        Objects.requireNonNull(deviceRequest);
-
-        InternalHttpResponse response = requestService.sendMessage(
-                deviceRequest.getGatewayId(),
-                new DeviceRequestMessage(deviceRequest)
-        );
+    @RequiredRole(roles = USER)
+    @PostMapping("/{gatewayId}")
+    public ResponseEntity<String> sendGatewayRequest(
+            @PathVariable String gatewayId,
+            @RequestBody GatewayRequestMessage requestMessage
+    ) throws ValidationException {
+        InternalHttpResponse response = requestService.sendGatewayRequest(gatewayId, requestMessage);
         return new ResponseEntity<>(response.getData(), HttpStatus.valueOf(response.getStatus()));
     }
 
-    // todo bad idea, should split logic for http requests and other commands
+    @RequiredRole(roles = {USER, GATEWAY})
+    @PostMapping("/device")
+    public ResponseEntity<String> sendDeviceRequest(@RequestBody DeviceRequest deviceRequest) throws ValidationException {
+        InternalHttpResponse response = requestService.sendDeviceRequest(deviceRequest);
+        return new ResponseEntity<>(response.getData(), HttpStatus.valueOf(response.getStatus()));
+    }
+
     @RequiredRole(roles = USER)
     @PostMapping("/command")
-    public ResponseEntity<String> sendCommand(@RequestBody SendCommandRequest messageRequest) throws Exception {
+    public Object sendCommand(@RequestBody SendCommandRequest messageRequest) throws Exception {
         Objects.requireNonNull(messageRequest);
         if (messageRequest.getCommand() == null || GatewayCommand.LOGOUT.equals(messageRequest.getCommand())) {
             throw new CommandNotAllowed("Command not allowed");
         }
 
-        InternalHttpResponse response = requestService.sendMessage(messageRequest.getGatewayId(), messageRequest);
-        return new ResponseEntity<>(response.getData(), HttpStatus.valueOf(response.getStatus()));
+        ResponseMessage response = requestService.sendMessage(messageRequest.getGatewayId(), messageRequest);
+        return response.getData();
     }
 
     @RequiredRole(roles = GATEWAY)
     @PostMapping("/response")
-    public void processResponse(@RequestBody ResponseMessage response) {
+    public void processResponse(@RequestBody ResponseMessage response) throws InterruptedException, TimeoutException {
         requestService.processResponse(Objects.requireNonNull(response));
     }
 
