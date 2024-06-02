@@ -32,7 +32,6 @@ public class SecurityConfig {
         http.authorizeHttpRequests()
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .antMatchers("/auth/user").permitAll()
-                .antMatchers("/rabbit/auth/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .anonymous().disable()
