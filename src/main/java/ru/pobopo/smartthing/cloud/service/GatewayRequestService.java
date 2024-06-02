@@ -26,6 +26,8 @@ import java.util.concurrent.Exchanger;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static ru.pobopo.smartthing.cloud.config.StompMessagingConfig.*;
+
 @Component
 @Slf4j
 @RequiredArgsConstructor
@@ -84,7 +86,7 @@ public class GatewayRequestService {
         message.setId(UUID.randomUUID());
         stompService.convertAndSendToUser(
                 gateway.getId(),
-                "/queue/gateway/",
+                GATEWAY_TOPIC + "/request",
                 message
         );
         log.info("User {} sent request {}", AuthorisationUtils.getCurrentUser(), message);
@@ -132,7 +134,7 @@ public class GatewayRequestService {
         log.info("Sending notification to {}: {}", gateway.getOwner(), notification);
         stompService.convertAndSendToUser(
             gateway.getOwner().getLogin(),
-            "/topic/notification",
+            NOTIFICATIONS_TOPIC,
             notification
         );
     }
@@ -150,7 +152,7 @@ public class GatewayRequestService {
         log.info("Sending gateway event to {}: {}", gateway.getOwner(), gatewayEvent);
         stompService.convertAndSendToUser(
                 gateway.getOwner().getLogin(),
-                "/topic/event",
+                EVENTS_TOPIC,
                 gatewayEvent
         );
     }

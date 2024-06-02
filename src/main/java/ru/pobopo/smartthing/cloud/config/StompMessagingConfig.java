@@ -18,9 +18,19 @@ import java.util.List;
 @Configuration
 @EnableWebSocketMessageBroker
 public class StompMessagingConfig implements WebSocketMessageBrokerConfigurer {
+    public static final String GATEWAY_TOPIC = "/gateway";
+    public static final String NOTIFICATIONS_TOPIC = "/notifications";
+    public static final String EVENTS_TOPIC = "/events";
+    public static final String DEVICES_TOPIC = "/devices";
+
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker( "/topic", "/queue")
+        config.enableSimpleBroker(
+                        NOTIFICATIONS_TOPIC,
+                        EVENTS_TOPIC,
+                        GATEWAY_TOPIC,
+                        DEVICES_TOPIC
+                )
                 .setTaskScheduler(taskScheduler())
                 .setHeartbeatValue(new long[] {10000, 10000});
         config.setUserDestinationPrefix("/secured");
@@ -28,7 +38,7 @@ public class StompMessagingConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws").setAllowedOrigins("*");
+        registry.addEndpoint("/smt-ws").setAllowedOrigins("*");
     }
 
     @Override
