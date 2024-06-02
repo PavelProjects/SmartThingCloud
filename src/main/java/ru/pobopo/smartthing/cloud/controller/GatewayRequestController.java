@@ -2,7 +2,6 @@ package ru.pobopo.smartthing.cloud.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -35,14 +34,14 @@ public class GatewayRequestController {
             @RequestBody GatewayRequestMessage requestMessage
     ) throws ValidationException {
         InternalHttpResponse response = requestService.sendGatewayRequest(gatewayId, requestMessage);
-        return new ResponseEntity<>(response.getData(), HttpStatus.valueOf(response.getStatus()));
+        return response.toResponseEntity();
     }
 
     @RequiredRole(roles = {USER, GATEWAY})
     @PostMapping("/device")
     public ResponseEntity<String> sendDeviceRequest(@RequestBody DeviceRequest deviceRequest) throws ValidationException {
         InternalHttpResponse response = requestService.sendDeviceRequest(deviceRequest);
-        return new ResponseEntity<>(response.getData(), HttpStatus.valueOf(response.getStatus()));
+        return response.toResponseEntity();
     }
 
     @RequiredRole(roles = USER)

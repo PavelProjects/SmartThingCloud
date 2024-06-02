@@ -91,7 +91,7 @@ public class GatewayRequestService {
         );
         log.info("User {} sent request {}", AuthorisationUtils.getCurrentUser(), message);
         if (!message.isNeedResponse()) {
-            return ResponseMessage.builder().data(InternalHttpResponse.builder().status(200).build()).build();
+            return null;
         }
         Exchanger<ResponseMessage> exchanger = new Exchanger<>();
         resultsMap.put(message.getId(), exchanger);
