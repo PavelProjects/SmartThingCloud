@@ -24,6 +24,11 @@ public class StompMessagingConfig implements WebSocketMessageBrokerConfigurer {
     public static final String DEVICES_TOPIC = "/devices";
 
     @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/smt-ws").setAllowedOrigins("*");
+    }
+
+    @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.enableSimpleBroker(
                         NOTIFICATIONS_TOPIC,
@@ -32,13 +37,9 @@ public class StompMessagingConfig implements WebSocketMessageBrokerConfigurer {
                         DEVICES_TOPIC
                 )
                 .setTaskScheduler(taskScheduler())
-                .setHeartbeatValue(new long[] {10000, 10000});
+//                .setHeartbeatValue(new long[] {10000, 10000})
+        ;
         config.setUserDestinationPrefix("/secured");
-    }
-
-    @Override
-    public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/smt-ws").setAllowedOrigins("*");
     }
 
     @Override
@@ -59,7 +60,7 @@ public class StompMessagingConfig implements WebSocketMessageBrokerConfigurer {
 
     private ThreadPoolTaskScheduler taskScheduler() {
         ThreadPoolTaskScheduler taskScheduler = new ThreadPoolTaskScheduler();
-        taskScheduler.setPoolSize(10);
+//        taskScheduler.setPoolSize(10);
         taskScheduler.initialize();
         return taskScheduler;
     }

@@ -1,6 +1,7 @@
 package ru.pobopo.smartthing.cloud;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -30,6 +31,9 @@ public class SmartThingCloudApplication {
                 return;
             }
             users.forEach((user) -> {
+                if (StringUtils.isBlank(user.getLogin()) || StringUtils.isBlank(user.getPassword())) {
+                    return;
+                }
                 try {
                     UserEntity userEntity = userService.createUser(user.getLogin(), user.getPassword());
                     userService.grantUserRole(userEntity, user.getRole().getName());
