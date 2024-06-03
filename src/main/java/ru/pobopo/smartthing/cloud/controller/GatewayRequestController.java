@@ -3,6 +3,7 @@ package ru.pobopo.smartthing.cloud.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import ru.pobopo.smartthing.cloud.annotation.RequiredRole;
@@ -78,5 +79,10 @@ public class GatewayRequestController {
             @RequestParam GatewayEventType event
     ) throws ValidationException {
         requestService.event(authenticatedUser, Objects.requireNonNull(event));
+    }
+
+    @MessageMapping("/gateway/ping")
+    public String ping() {
+        return "";
     }
 }

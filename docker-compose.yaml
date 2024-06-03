@@ -32,3 +32,5 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: none
       SPRING_JPA_HIBERNATE_SHOW_SQL: false
       JWT_TOKEN_TTL: 3600
+    volumes:
+      - /var/log:/log

@@ -25,3 +25,7 @@ jwt:
 users:
   - {login: '${ADMIN_LOGIN:}', password: '${ADMIN_PASSWORD:}', role: 'admin'}
   - {login: 'guest', password: '123', role: 'user'}
+
+logging:
+  file:
+    name: ./log/cloud.log
