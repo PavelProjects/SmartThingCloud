@@ -37,9 +37,7 @@ public class StompMessagingConfig implements WebSocketMessageBrokerConfigurer {
                         GATEWAY_TOPIC,
                         DEVICES_TOPIC
                 )
-                .setTaskScheduler(taskScheduler())
-//                .setHeartbeatValue(new long[] {10000, 10000})
-        ;
+                .setTaskScheduler(taskScheduler());
         config.setUserDestinationPrefix("/secured");
     }
 
@@ -61,7 +59,6 @@ public class StompMessagingConfig implements WebSocketMessageBrokerConfigurer {
 
     private ThreadPoolTaskScheduler taskScheduler() {
         ThreadPoolTaskScheduler taskScheduler = new ThreadPoolTaskScheduler();
-//        taskScheduler.setPoolSize(10);
         taskScheduler.initialize();
         return taskScheduler;
     }

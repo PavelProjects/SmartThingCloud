@@ -5,8 +5,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.messaging.SessionConnectedEvent;
+import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.GatewayRequestException;
@@ -155,5 +158,17 @@ public class GatewayRequestService {
                 EVENTS_TOPIC,
                 gatewayEvent
         );
+    }
+
+
+    @EventListener
+    public void disconnectEvent(SessionDisconnectEvent event) {
+        log.warn("Client {} disconnected", event.getUser());
+    }
+
+
+    @EventListener
+    public void connectEvent(SessionConnectedEvent event) {
+        log.warn("Client {} connected", event.getUser());
     }
 }
