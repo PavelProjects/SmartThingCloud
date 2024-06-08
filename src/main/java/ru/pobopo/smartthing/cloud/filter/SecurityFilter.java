@@ -52,7 +52,7 @@ public class SecurityFilter extends OncePerRequestFilter {
                         break;
                     }
                     case GATEWAY: {
-                        gatewayAuthService.validate(authenticatedUser, token);
+                        gatewayAuthService.validate(authenticatedUser, request);
                         break;
                     }
                 }

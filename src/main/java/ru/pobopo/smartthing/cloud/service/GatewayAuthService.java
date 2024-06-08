@@ -3,6 +3,7 @@ package ru.pobopo.smartthing.cloud.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.messaging.simp.user.SimpUser;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import ru.pobopo.smartthing.model.stomp.GatewayCommandMessage;
 import ru.pobopo.smartthing.model.stomp.GatewayEventType;
 
 import javax.naming.AuthenticationException;
+import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -68,7 +70,7 @@ public class GatewayAuthService {
         return token;
     }
 
-    public void validate(AuthenticatedUser authenticatedUser, String token) throws AccessDeniedException {
+    public void validate(AuthenticatedUser authenticatedUser, HttpServletRequest request) throws AccessDeniedException {
         if (authenticatedUser.getUser() == null) {
             log.error("Missing user in token");
             throw new AccessDeniedException();
@@ -85,8 +87,9 @@ public class GatewayAuthService {
         if (tokenEntity.isEmpty()) {
             throw new AccessDeniedException();
         }
-        if (userRegistry.getUser(authenticatedUser.getGateway().getId()) != null) {
-            throw new AccessDeniedException("Gateway with this token already connected!");
+        SimpUser user = userRegistry.getUser(authenticatedUser.getGateway().getName());
+        if (StringUtils.equals(request.getPathInfo(), "/smt-ws") && user != null) {
+            throw new AccessDeniedException("There is already connected gateway by this token");
         }
     }
 
