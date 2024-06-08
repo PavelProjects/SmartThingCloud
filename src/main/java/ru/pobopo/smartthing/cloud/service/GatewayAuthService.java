@@ -3,6 +3,7 @@ package ru.pobopo.smartthing.cloud.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
@@ -36,6 +37,7 @@ public class GatewayAuthService {
     private final UserRepository userRepository;
     private final JwtTokenUtil jwtTokenUtil;
     private final GatewayRequestService requestService;
+    private final SimpUserRegistry userRegistry;
 
     public String generateToken(String gatewayId) throws AccessDeniedException, ValidationException, AuthenticationException {
         GatewayEntity gateway = getGatewayWithValidation(gatewayId);
@@ -83,8 +85,8 @@ public class GatewayAuthService {
         if (tokenEntity.isEmpty()) {
             throw new AccessDeniedException();
         }
-        if (!tokenEntity.get().getToken().equals(token)) {
-            throw new AccessDeniedException("Wrong token!");
+        if (userRegistry.getUser(authenticatedUser.getGateway().getId()) != null) {
+            throw new AccessDeniedException("Gateway with this token already connected!");
         }
     }
 
