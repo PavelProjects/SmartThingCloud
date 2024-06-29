@@ -20,7 +20,7 @@ logginglevel:
 jwt:
   token:
     secret: ${JWT_SECRET:}
-    ttl: ${JWT_TOKEN_TTL:10}
+    ttl: ${JWT_TOKEN_TTL:3600}
     refresh:
       ttl: ${JWT_REFRESH_TOKEN_TTL:864000}
 
