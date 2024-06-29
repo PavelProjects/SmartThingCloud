@@ -1,8 +1,6 @@
 package ru.pobopo.smartthing.cloud.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -12,8 +10,10 @@ import org.springframework.web.bind.annotation.*;
 import ru.pobopo.smartthing.cloud.annotation.RequiredRole;
 import ru.pobopo.smartthing.cloud.controller.model.AuthRequest;
 import ru.pobopo.smartthing.cloud.controller.model.GatewayTokenRequest;
+import ru.pobopo.smartthing.cloud.controller.model.RefreshRequest;
 import ru.pobopo.smartthing.cloud.controller.model.TokenResponse;
 import ru.pobopo.smartthing.cloud.dto.AuthorizedUserDto;
+import ru.pobopo.smartthing.cloud.dto.UserTokenPair;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.mapper.AuthorizedUserMapper;
@@ -45,7 +45,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/user")
-    public AuthorizedUserDto authUser(
+    public UserTokenPair authUser(
             HttpServletResponse response,
             @RequestBody AuthRequest request
     ) {
@@ -55,10 +55,15 @@ public class AuthenticationController {
         if (!auth.isAuthenticated()) {
             throw new BadCredentialsException("Wrong user credits");
         }
-        AuthenticatedUser user = userAuthService.authenticate(auth);
-        ResponseCookie responseCookie = userAuthService.buildCookie(user);
-        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-        return authorizedUserMapper.toDto(user);
+        return userAuthService.authenticate(auth, response);
+    }
+
+    @PostMapping("/user/refresh")
+    public UserTokenPair refreshUserToken(
+            @RequestBody RefreshRequest request,
+            HttpServletResponse response
+    ) {
+        return userAuthService.refreshToken(request.getRefreshToken(), response);
     }
 
     @RequiredRole(roles = USER)
@@ -70,8 +75,8 @@ public class AuthenticationController {
 
     @RequiredRole(roles = USER)
     @PostMapping("/user/logout")
-    public void userLogout(HttpServletResponse response) {
-        response.addHeader(HttpHeaders.SET_COOKIE, userAuthService.logoutCookie().toString());
+    public void userLogout(@AuthenticationPrincipal AuthenticatedUser user, HttpServletResponse response) {
+        userAuthService.logout(user, response);
     }
 
     @RequiredRole(roles = {USER, GATEWAY})

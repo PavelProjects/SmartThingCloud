@@ -1,0 +1,1 @@
+drop table smt_user_token;

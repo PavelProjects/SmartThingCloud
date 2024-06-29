@@ -27,8 +27,6 @@ public class CorsFilter implements Filter {
         response.setHeader("Access-Control-Max-Age", "7200");
         response.setHeader("Access-Control-Allow-Headers", "Content-Type, Accept, X-Requested-With, remember-me");
 
-        log.debug("Request [{}]{} from {}", request.getMethod(), request.getServletPath(), origin);
-
         chain.doFilter(req, res);
     }
 

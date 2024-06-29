@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import ru.pobopo.smartthing.cloud.filter.CorsFilter;
 import ru.pobopo.smartthing.cloud.filter.SecurityFilter;
 
 @Configuration
@@ -22,6 +23,8 @@ import ru.pobopo.smartthing.cloud.filter.SecurityFilter;
 public class SecurityConfig {
     @Autowired
     private SecurityFilter securityFilter;
+    @Autowired
+    private CorsFilter corsFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -31,7 +34,7 @@ public class SecurityConfig {
 
         http.authorizeHttpRequests()
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .antMatchers("/auth/user").permitAll()
+                .antMatchers("/auth/user", "/auth/user/refresh").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .anonymous().disable()
@@ -40,6 +43,7 @@ public class SecurityConfig {
 
 
         http.addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(corsFilter, SecurityFilter.class);
         return http.build();
     }
 

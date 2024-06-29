@@ -28,9 +28,6 @@ public class GatewayTokenEntity {
     @JoinColumn(name = "owner_id", nullable = false)
     private UserEntity owner;
 
-    @Column(name = "token", nullable = false)
-    private String token;
-
     @Column(name = "creation_date", nullable = false)
     private LocalDateTime creationDate;
 }

@@ -41,6 +41,7 @@ public class GatewayAuthService {
     private final GatewayRequestService requestService;
     private final SimpUserRegistry userRegistry;
 
+    // todo add some info about gateway in token?
     public String generateToken(String gatewayId) throws AccessDeniedException, ValidationException, AuthenticationException {
         GatewayEntity gateway = getGatewayWithValidation(gatewayId);
         Optional<GatewayTokenEntity> tokenEntity = gatewayTokenRepository.findByGateway(gateway);
@@ -127,7 +128,6 @@ public class GatewayAuthService {
 
     private void saveToken(AuthenticatedUser authenticatedUser, String token) {
         GatewayTokenEntity gatewayToken = new GatewayTokenEntity();
-        gatewayToken.setToken(token);
         gatewayToken.setOwner(authenticatedUser.getUser());
         gatewayToken.setGateway(authenticatedUser.getGateway());
         gatewayToken.setCreationDate(LocalDateTime.now());

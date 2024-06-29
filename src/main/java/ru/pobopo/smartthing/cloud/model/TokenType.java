@@ -5,8 +5,9 @@ import org.apache.commons.lang3.StringUtils;
 
 @Getter
 public enum TokenType {
-    USER("user_token"),
-    GATEWAY("gateway_token");
+    USER("user"),
+    USER_REFRESH("user_refresh"),
+    GATEWAY("gateway");
 
     private final String name;
     TokenType(String name) {

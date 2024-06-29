@@ -20,7 +20,9 @@ logginglevel:
 jwt:
   token:
     secret: ${JWT_SECRET:}
-    ttl: ${JWT_TOKEN_TTL:3600}
+    ttl: ${JWT_TOKEN_TTL:10}
+    refresh:
+      ttl: ${JWT_REFRESH_TOKEN_TTL:864000}
 
 users:
   - {login: '${ADMIN_LOGIN:}', password: '${ADMIN_PASSWORD:}', role: 'admin'}

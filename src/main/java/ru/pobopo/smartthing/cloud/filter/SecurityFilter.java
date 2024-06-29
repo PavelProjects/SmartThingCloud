@@ -45,7 +45,10 @@ public class SecurityFilter extends OncePerRequestFilter {
         );
         if (StringUtils.isNotBlank(token)) {
             try {
-                AuthenticatedUser authenticatedUser = parseToken(token);
+                if (jwtTokenUtil.isTokenExpired(token)) {
+                    throw new AccessDeniedException("Token expired!");
+                }
+                AuthenticatedUser authenticatedUser = AuthenticatedUser.fromClaims(jwtTokenUtil.getAllClaimsFromToken(token));
                 switch (authenticatedUser.getTokenType()) {
                     case USER: {
                         userAuthService.validate(authenticatedUser);
@@ -63,13 +66,6 @@ public class SecurityFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
-    }
-
-    private AuthenticatedUser parseToken(String token) throws AccessDeniedException {
-        if (jwtTokenUtil.isTokenExpired(token)) {
-            throw new AccessDeniedException("Token expired!");
-        }
-        return AuthenticatedUser.fromClaims(jwtTokenUtil.getAllClaimsFromToken(token));
     }
 
     private void setUserDetailsToContext(AuthenticatedUser authenticatedUser, HttpServletRequest request) {

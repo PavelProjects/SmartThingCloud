@@ -35,7 +35,7 @@ public class UserDetailsService implements org.springframework.security.core.use
         }
     }
 
-    private List<GrantedAuthority> getAuthorities(UserEntity user) {
+    public List<GrantedAuthority> getAuthorities(UserEntity user) {
         List<UserRoleEntity> roles = userRoleRepository.findByUserId(user.getId());
         if (roles.isEmpty()) {
             return List.of();

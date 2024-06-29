@@ -16,4 +16,11 @@
             <sqlFile path="rollback/12012024.sql" relativeToChangelogFile="true"/>
         </rollback>
     </changeSet>
+    <changeSet id="03" author="pobopo">
+        <comment>Add user token table</comment>
+        <sqlFile path="sql/29072024.sql" relativeToChangelogFile="true" splitStatements="false"/>
+        <rollback>
+            <sqlFile path="rollback/29072024.sql" relativeToChangelogFile="true"/>
+        </rollback>
+    </changeSet>
 </databaseChangeLog>
