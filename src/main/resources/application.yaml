@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://192.168.2.170:5432/smartthing
+    url: jdbc:postgresql://192.168.88.170/smartthing
     username: admin
-    password: adminbruh
+    password: admin
     driver-class-name: org.postgresql.Driver
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
@@ -31,3 +31,4 @@ users:
 logging:
   file:
     name: ./log/cloud.log
+  max-size: 20GB

@@ -1,6 +1,7 @@
 package ru.pobopo.smartthing.cloud.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -45,8 +46,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/user")
-    public UserTokenPair authUser(
-            HttpServletResponse response,
+    public ResponseEntity<UserTokenPair> authUser(
             @RequestBody AuthRequest request
     ) {
         Authentication auth = authenticationManager.authenticate(
@@ -55,7 +55,7 @@ public class AuthenticationController {
         if (!auth.isAuthenticated()) {
             throw new BadCredentialsException("Wrong user credits");
         }
-        return userAuthService.authenticate(auth, response);
+        return userAuthService.authenticate(auth);
     }
 
     @PostMapping("/user/refresh")

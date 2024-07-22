@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -44,7 +46,7 @@ public class UserAuthService {
     private long refreshTokenTtl;
 
     @Transactional
-    public UserTokenPair authenticate(Authentication authentication, HttpServletResponse response) {
+    public ResponseEntity<UserTokenPair> authenticate(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         UserEntity user = userRepository.findByLogin(userDetails.getUsername());
 
@@ -55,10 +57,11 @@ public class UserAuthService {
         }
 
         UserTokenPair tokenPair = createNewTokenPair(AuthenticatedUser.build(TokenType.USER, user, userDetails.getAuthorities()));
-        response.addHeader(HttpHeaders.SET_COOKIE, buildCookie(tokenPair.getToken()).toString());
 
         log.info("User {} is authenticated", user);
-        return tokenPair;
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.SET_COOKIE, buildCookie(tokenPair.getToken()).toString());
+        return new ResponseEntity<>(tokenPair, headers, HttpStatus.OK);
     }
 
     @Transactional
