@@ -67,10 +67,10 @@ public class AuthenticationController {
     }
 
     @RequiredRole(roles = USER)
-    @PostMapping("/gateway")
-    public TokenResponse authGateway(@RequestBody GatewayTokenRequest request)
+    @PostMapping("/gateway/{gatewayId}")
+    public TokenResponse authGateway(@PathVariable String gatewayId)
         throws ValidationException, AuthenticationException, AccessDeniedException {
-        return new TokenResponse(gatewayAuthService.generateToken(request.getGatewayId()));
+        return new TokenResponse(gatewayAuthService.generateToken(gatewayId));
     }
 
     @RequiredRole(roles = USER)
@@ -80,8 +80,8 @@ public class AuthenticationController {
     }
 
     @RequiredRole(roles = {USER, GATEWAY})
-    @PostMapping("/gateway/logout")
-    public void gatewayLogout(@RequestBody GatewayTokenRequest request) throws Exception {
-        gatewayAuthService.logout(request.getGatewayId());
+    @PostMapping("/gateway/logout/{gatewayId}")
+    public void gatewayLogout(@PathVariable String gatewayId) throws Exception {
+        gatewayAuthService.logout(gatewayId);
     }
 }
