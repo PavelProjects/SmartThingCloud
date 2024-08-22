@@ -99,7 +99,7 @@ public class GatewayAuthService {
         GatewayEntity gateway = getGatewayWithValidation(gatewayId);
         Optional<GatewayTokenEntity> tokenEntity = gatewayTokenRepository.findByGateway(gateway);
         if (tokenEntity.isEmpty()) {
-            throw new ValidationException("There is no token for gateway " + gatewayId);
+            return;
         }
         gatewayTokenRepository.delete(tokenEntity.get());
 
