@@ -66,20 +66,19 @@ public class AuthenticatedUser implements Serializable, Principal {
     }
 
     public static AuthenticatedUser fromClaims(Claims claims) {
-        TokenType tokenType = TokenType.fromString((String) claims.get(CLAIM_TOKEN_TYPE));
+        TokenType tokenType = TokenType.fromString(claims.get(CLAIM_TOKEN_TYPE, String.class));
 
         UserEntity user = new UserEntity();
-        user.setId((String) claims.get(CLAIM_USER_ID));
-        user.setLogin((String) claims.get(CLAIM_USER_LOGIN));
+        user.setId(claims.get(CLAIM_USER_ID, String.class));
+        user.setLogin(claims.get(CLAIM_USER_LOGIN, String.class));
 
         Collection<String> authorities = (Collection<String>) claims.get(CLAIM_USER_AUTHORITIES);
-
         GatewayEntity gatewayEntity = null;
         if (claims.containsKey(CLAIM_GATEWAY_ID)) {
             gatewayEntity = new GatewayEntity();
-            gatewayEntity.setId((String) claims.get(CLAIM_GATEWAY_ID));
-            gatewayEntity.setName((String) claims.get(CLAIM_GATEWAY_NAME));
-            gatewayEntity.setDescription((String) claims.get(CLAIM_GATEWAY_DESCRIPTION));
+            gatewayEntity.setId(claims.get(CLAIM_GATEWAY_ID, String.class));
+            gatewayEntity.setName(claims.get(CLAIM_GATEWAY_NAME, String.class));
+            gatewayEntity.setDescription(claims.get(CLAIM_GATEWAY_DESCRIPTION, String.class));
         }
 
         return build(
@@ -91,7 +90,7 @@ public class AuthenticatedUser implements Serializable, Principal {
     }
 
     public Map<String, Object> toClaims() {
-        HashMap<String, Object> claims = new HashMap<>();
+        Map<String, Object> claims = new HashMap<>();
         claims.put(CLAIM_TOKEN_TYPE, tokenType.getName());
 
         claims.put(CLAIM_USER_ID, user.getId());

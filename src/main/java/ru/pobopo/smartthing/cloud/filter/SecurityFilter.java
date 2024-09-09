@@ -1,5 +1,6 @@
 package ru.pobopo.smartthing.cloud.filter;
 
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -48,14 +49,15 @@ public class SecurityFilter extends OncePerRequestFilter {
                 if (jwtTokenUtil.isTokenExpired(token)) {
                     throw new AccessDeniedException("Token expired!");
                 }
-                AuthenticatedUser authenticatedUser = AuthenticatedUser.fromClaims(jwtTokenUtil.getAllClaimsFromToken(token));
+                Claims claims = jwtTokenUtil.getAllClaimsFromToken(token);
+                AuthenticatedUser authenticatedUser = AuthenticatedUser.fromClaims(claims);
                 switch (authenticatedUser.getTokenType()) {
                     case USER: {
                         userAuthService.validate(authenticatedUser);
                         break;
                     }
                     case GATEWAY: {
-                        gatewayAuthService.validate(authenticatedUser, request);
+                        gatewayAuthService.validate(authenticatedUser, request, claims);
                         break;
                     }
                 }

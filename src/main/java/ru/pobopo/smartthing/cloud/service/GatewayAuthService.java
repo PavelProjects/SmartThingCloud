@@ -1,5 +1,6 @@
 package ru.pobopo.smartthing.cloud.service;
 
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -34,6 +35,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class GatewayAuthService {
+    private static final String CLAIM_TOKEN_ID = "token_id";
+
     private final GatewayRepository gatewayRepository;
     private final GatewayTokenRepository gatewayTokenRepository;
     private final UserRepository userRepository;
@@ -41,7 +44,7 @@ public class GatewayAuthService {
     private final GatewayRequestService requestService;
     private final SimpUserRegistry userRegistry;
 
-    // todo add some info about gateway in token?
+    @Transactional
     public String generateToken(String gatewayId) throws AccessDeniedException, ValidationException, AuthenticationException {
         GatewayEntity gateway = getGatewayWithValidation(gatewayId);
         Optional<GatewayTokenEntity> tokenEntity = gatewayTokenRepository.findByGateway(gateway);
@@ -57,38 +60,38 @@ public class GatewayAuthService {
                 gateway
         );
 
-        String token = jwtTokenUtil.doGenerateToken(
-                authenticatedUser.getTokenType().getName(),
-                authenticatedUser.toClaims(),
-                -1
-        );
-        saveToken(authenticatedUser, token);
+        GatewayTokenEntity gatewayToken = new GatewayTokenEntity();
+        gatewayToken.setOwner(authenticatedUser.getUser());
+        gatewayToken.setGateway(authenticatedUser.getGateway());
+        gatewayToken.setCreationDate(LocalDateTime.now());
+        gatewayTokenRepository.save(gatewayToken);
+
+        Map<String, Object> claims = authenticatedUser.toClaims();
+        claims.put(CLAIM_TOKEN_ID, gatewayToken.getId());
+
+        String token = jwtTokenUtil.doGenerateToken(TokenType.GATEWAY.getName(), claims,-1);
         log.info(
-                "Authorized user [{}] generated token for gateway [{}]",
+                "Authorized user [{}] generated token for gateway [{}] (id={})",
                 authenticatedUser,
-                gatewayId
+                gatewayId,
+                gatewayToken.getId()
         );
         return token;
     }
 
-    public void validate(AuthenticatedUser authenticatedUser, HttpServletRequest request) throws AccessDeniedException {
-        if (authenticatedUser.getUser() == null) {
-            log.error("Missing user in token");
-            throw new AccessDeniedException();
-        }
-        if (!userRepository.existsById(authenticatedUser.getUser().getId())) {
-            throw new AccessDeniedException("User not found");
+    public void validate(AuthenticatedUser authenticatedUser, HttpServletRequest request, Claims claims) throws AccessDeniedException {
+        String tokenId = claims.get(CLAIM_TOKEN_ID, String.class);
+        GatewayEntity gateway = authenticatedUser.getGateway();
+        if (gateway == null || StringUtils.isBlank(tokenId) || authenticatedUser.getUser() == null) {
+            throw new AccessDeniedException("General info missing");
         }
 
-        if (authenticatedUser.getGateway() == null) {
-            throw new AccessDeniedException();
+        Optional<GatewayTokenEntity> tokenEntity = gatewayTokenRepository.findByGateway(gateway);
+        if (tokenEntity.isEmpty() || !StringUtils.equals(tokenEntity.get().getId(), tokenId)) {
+            throw new AccessDeniedException("Unknown gateway token");
         }
 
-        Optional<GatewayTokenEntity> tokenEntity = gatewayTokenRepository.findByGateway(authenticatedUser.getGateway());
-        if (tokenEntity.isEmpty()) {
-            throw new AccessDeniedException();
-        }
-        SimpUser user = userRegistry.getUser(authenticatedUser.getGateway().getId());
+        SimpUser user = userRegistry.getUser(gateway.getId());
         if (StringUtils.equals(request.getPathInfo(), "/smt-ws") && user != null) {
             throw new AccessDeniedException("There is already connected gateway by this token");
         }
@@ -124,14 +127,6 @@ public class GatewayAuthService {
 
     public GatewayTokenEntity getToken(GatewayEntity gateway) {
         return gatewayTokenRepository.findByGateway(gateway).orElse(null);
-    }
-
-    private void saveToken(AuthenticatedUser authenticatedUser, String token) {
-        GatewayTokenEntity gatewayToken = new GatewayTokenEntity();
-        gatewayToken.setOwner(authenticatedUser.getUser());
-        gatewayToken.setGateway(authenticatedUser.getGateway());
-        gatewayToken.setCreationDate(LocalDateTime.now());
-        gatewayTokenRepository.save(gatewayToken);
     }
 
     private GatewayEntity getGatewayWithValidation(String gatewayId)
