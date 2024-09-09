@@ -108,7 +108,7 @@ public class GatewayAuthService {
             GatewayCommandMessage message = new GatewayCommandMessage(GatewayCommand.LOGOUT, null);
             message.setNeedResponse(false);
             requestService.sendMessage(gatewayId, message);
-        } else {
+        } else if (userRegistry.getUser(gatewayId) != null) {
             requestService.event(user, GatewayEventType.DISCONNECTED);
         }
     }
