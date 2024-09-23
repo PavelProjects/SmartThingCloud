@@ -1,5 +1,6 @@
 package ru.pobopo.smartthing.cloud.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -10,7 +11,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import ru.pobopo.smartthing.cloud.annotation.RequiredRole;
 import ru.pobopo.smartthing.cloud.controller.model.AuthRequest;
-import ru.pobopo.smartthing.cloud.controller.model.GatewayTokenRequest;
 import ru.pobopo.smartthing.cloud.controller.model.RefreshRequest;
 import ru.pobopo.smartthing.cloud.controller.model.TokenResponse;
 import ru.pobopo.smartthing.cloud.dto.AuthorizedUserDto;
@@ -23,7 +23,6 @@ import ru.pobopo.smartthing.cloud.service.GatewayAuthService;
 import ru.pobopo.smartthing.cloud.service.UserAuthService;
 
 import javax.naming.AuthenticationException;
-import javax.servlet.http.HttpServletResponse;
 
 import static ru.pobopo.smartthing.cloud.model.Role.Constants.GATEWAY;
 import static ru.pobopo.smartthing.cloud.model.Role.Constants.USER;

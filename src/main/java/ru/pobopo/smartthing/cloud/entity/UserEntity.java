@@ -1,12 +1,12 @@
 package ru.pobopo.smartthing.cloud.entity;
 
-import javax.persistence.*;
-import java.time.LocalDateTime;
-import lombok.Data;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.GenericGenerator;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = UserEntity.TYPE)

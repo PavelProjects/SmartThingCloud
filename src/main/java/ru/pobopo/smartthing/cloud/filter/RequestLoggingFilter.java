@@ -1,17 +1,17 @@
 package ru.pobopo.smartthing.cloud.filter;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebFilter;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.AbstractRequestLoggingFilter;
 import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebFilter;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @Slf4j
@@ -50,10 +50,10 @@ public class RequestLoggingFilter extends AbstractRequestLoggingFilter {
         if (response != null) {
             stringBuilder.append(", status=").append(response.getStatus());
         }
-        UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        if (token != null) {
-            AuthenticatedUser user = (AuthenticatedUser) token.getPrincipal();
-            stringBuilder.append(", user=").append(user);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null) {
+            AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
+            stringBuilder.append(", user=").append(user == null ? "anon" : user);
         }
         stringBuilder.append(suffix);
         return super.createMessage(request, prefix, stringBuilder.toString());

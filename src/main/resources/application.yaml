@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://192.168.88.170/smartthing
+    url: jdbc:postgresql://192.168.1.27/smartthing
     username: admin
     password: admin
     driver-class-name: org.postgresql.Driver

@@ -1,5 +1,7 @@
 package ru.pobopo.smartthing.cloud.service;
 
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -21,8 +23,6 @@ import ru.pobopo.smartthing.cloud.model.TokenType;
 import ru.pobopo.smartthing.cloud.repository.UserRepository;
 import ru.pobopo.smartthing.cloud.repository.UserTokenRepository;
 
-import javax.servlet.http.HttpServletResponse;
-import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.Optional;
 

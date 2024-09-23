@@ -1,6 +1,8 @@
 package ru.pobopo.smartthing.cloud.service;
 
 import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -23,8 +25,6 @@ import ru.pobopo.smartthing.model.stomp.GatewayCommandMessage;
 import ru.pobopo.smartthing.model.stomp.GatewayEventType;
 
 import javax.naming.AuthenticationException;
-import javax.servlet.http.HttpServletRequest;
-import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
