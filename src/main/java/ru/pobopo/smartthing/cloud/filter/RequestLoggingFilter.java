@@ -51,9 +51,8 @@ public class RequestLoggingFilter extends AbstractRequestLoggingFilter {
             stringBuilder.append(", status=").append(response.getStatus());
         }
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null) {
-            AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
-            stringBuilder.append(", user=").append(user == null ? "anon" : user);
+        if (authentication != null && authentication.getPrincipal() instanceof AuthenticatedUser user) {
+            stringBuilder.append(", user=").append(user);
         }
         stringBuilder.append(suffix);
         return super.createMessage(request, prefix, stringBuilder.toString());
