@@ -1,7 +1,5 @@
 package ru.pobopo.smartthing.cloud.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +36,6 @@ import static ru.pobopo.smartthing.cloud.config.StompMessagingConfig.*;
 public class GatewayRequestService {
     private final GatewayRepository gatewayRepository;
     private final SimpMessagingTemplate stompService;
-    private final ObjectMapper objectMapper;
 
     private final Map<UUID, Exchanger<ResponseMessage>> resultsMap = new ConcurrentHashMap<>();
 
@@ -52,7 +49,7 @@ public class GatewayRequestService {
         }
 
         ResponseMessage responseMessage = sendMessage(gatewayId, requestMessage);
-        return objectMapper.convertValue(responseMessage.getData(), new TypeReference<>() {});
+        return responseMessage.getData();
     }
 
     public ResponseEntity<String> sendDeviceRequest(DeviceRequest request) throws ValidationException {
@@ -67,7 +64,7 @@ public class GatewayRequestService {
         }
 
         ResponseMessage responseMessage = sendMessage(request.getGatewayId(), new DeviceRequestMessage(request));
-        return objectMapper.convertValue(responseMessage.getData(), new TypeReference<>() {});
+        return responseMessage.getData();
     }
 
     public <T extends BaseMessage> ResponseMessage sendMessage(String gatewayId, T message) {
