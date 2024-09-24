@@ -1,11 +1,11 @@
 package ru.pobopo.smartthing.cloud.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.event.EventListener;
-import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
@@ -17,6 +17,7 @@ import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.model.GatewayInfo;
+import ru.pobopo.smartthing.model.InternalHttpResponse;
 import ru.pobopo.smartthing.model.stomp.*;
 
 import java.util.Map;
@@ -36,10 +37,11 @@ import static ru.pobopo.smartthing.cloud.config.StompMessagingConfig.*;
 public class GatewayRequestService {
     private final GatewayRepository gatewayRepository;
     private final SimpMessagingTemplate stompService;
+    private final ObjectMapper objectMapper;
 
     private final Map<UUID, Exchanger<ResponseMessage>> resultsMap = new ConcurrentHashMap<>();
 
-    public ResponseEntity<String> sendGatewayRequest(String gatewayId, GatewayRequestMessage requestMessage) throws ValidationException {
+    public InternalHttpResponse sendGatewayRequest(String gatewayId, GatewayRequestMessage requestMessage) throws ValidationException {
         if (StringUtils.isBlank(gatewayId)) {
             throw new ValidationException("Gateway id is missing!");
         }
@@ -49,10 +51,10 @@ public class GatewayRequestService {
         }
 
         ResponseMessage responseMessage = sendMessage(gatewayId, requestMessage);
-        return responseMessage.getData();
+        return objectMapper.convertValue(responseMessage.getData(), InternalHttpResponse.class);
     }
 
-    public ResponseEntity<String> sendDeviceRequest(DeviceRequest request) throws ValidationException {
+    public InternalHttpResponse sendDeviceRequest(DeviceRequest request) throws ValidationException {
         Objects.requireNonNull(request, "Device request is missing!");
         Objects.requireNonNull(request.getDevice(), "Device info is missing!");
 
@@ -64,7 +66,7 @@ public class GatewayRequestService {
         }
 
         ResponseMessage responseMessage = sendMessage(request.getGatewayId(), new DeviceRequestMessage(request));
-        return responseMessage.getData();
+        return objectMapper.convertValue(responseMessage.getData(), InternalHttpResponse.class);
     }
 
     public <T extends BaseMessage> ResponseMessage sendMessage(String gatewayId, T message) {

@@ -11,6 +11,7 @@ import ru.pobopo.smartthing.cloud.exception.CommandNotAllowed;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
 import ru.pobopo.smartthing.cloud.service.GatewayRequestService;
+import ru.pobopo.smartthing.model.InternalHttpResponse;
 import ru.pobopo.smartthing.model.stomp.*;
 
 import java.util.Objects;
@@ -32,13 +33,15 @@ public class GatewayRequestController {
             @PathVariable String gatewayId,
             @RequestBody GatewayRequestMessage requestMessage
     ) throws ValidationException {
-        return requestService.sendGatewayRequest(gatewayId, requestMessage);
+        InternalHttpResponse response = requestService.sendGatewayRequest(gatewayId, requestMessage);
+        return response.toResponseEntity();
     }
 
     @RequiredRole(roles = {USER, GATEWAY})
     @PostMapping("/device")
     public ResponseEntity<String> sendDeviceRequest(@RequestBody DeviceRequest deviceRequest) throws ValidationException {
-        return requestService.sendDeviceRequest(deviceRequest);
+        InternalHttpResponse response = requestService.sendDeviceRequest(deviceRequest);
+        return response.toResponseEntity();
     }
 
     @RequiredRole(roles = USER)
