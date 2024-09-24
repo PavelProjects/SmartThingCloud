@@ -17,7 +17,7 @@
     <properties>
         <java.version>17</java.version>
         <start-class>ru.pobopo.smartthing.cloud.SmartThingCloudApplication</start-class>
-        <commons.version>1.5.2</commons.version>
+        <commons.version>1.5.3</commons.version>
     </properties>
 
     <repositories>
