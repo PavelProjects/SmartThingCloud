@@ -1,4 +1,4 @@
-package ru.pobopo.smartthing.cloud.dto;
+package ru.pobopo.smartthing.cloud.controller.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;

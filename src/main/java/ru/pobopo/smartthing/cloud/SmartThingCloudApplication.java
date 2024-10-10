@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 import ru.pobopo.smartthing.cloud.config.UserConfig;
 import ru.pobopo.smartthing.cloud.config.UsersSettings;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
-import ru.pobopo.smartthing.cloud.service.UserService;
+import ru.pobopo.smartthing.cloud.service.user.UserService;
 
 import java.util.List;
 

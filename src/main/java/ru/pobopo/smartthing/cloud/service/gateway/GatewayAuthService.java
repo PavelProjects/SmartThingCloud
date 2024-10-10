@@ -1,4 +1,4 @@
-package ru.pobopo.smartthing.cloud.service;
+package ru.pobopo.smartthing.cloud.service.gateway;
 
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,6 +20,7 @@ import ru.pobopo.smartthing.cloud.model.TokenType;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.repository.GatewayTokenRepository;
 import ru.pobopo.smartthing.cloud.repository.UserRepository;
+import ru.pobopo.smartthing.cloud.service.AuthorisationUtils;
 import ru.pobopo.smartthing.model.stomp.GatewayCommand;
 import ru.pobopo.smartthing.model.stomp.GatewayCommandMessage;
 import ru.pobopo.smartthing.model.stomp.GatewayEventType;

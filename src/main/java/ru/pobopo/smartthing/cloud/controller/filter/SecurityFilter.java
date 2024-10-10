@@ -1,4 +1,4 @@
-package ru.pobopo.smartthing.cloud.filter;
+package ru.pobopo.smartthing.cloud.controller.filter;
 
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -18,12 +18,12 @@ import org.springframework.web.util.WebUtils;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.jwt.JwtTokenUtil;
 import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
-import ru.pobopo.smartthing.cloud.service.GatewayAuthService;
-import ru.pobopo.smartthing.cloud.service.UserAuthService;
+import ru.pobopo.smartthing.cloud.service.gateway.GatewayAuthService;
+import ru.pobopo.smartthing.cloud.service.user.UserAuthService;
 
 import java.io.IOException;
 
-import static ru.pobopo.smartthing.cloud.service.UserAuthService.USER_COOKIE_NAME;
+import static ru.pobopo.smartthing.cloud.service.user.UserAuthService.USER_COOKIE_NAME;
 
 @Slf4j
 @Component

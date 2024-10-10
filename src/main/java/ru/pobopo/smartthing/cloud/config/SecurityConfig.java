@@ -14,8 +14,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import ru.pobopo.smartthing.cloud.filter.CorsFilter;
-import ru.pobopo.smartthing.cloud.filter.SecurityFilter;
+import ru.pobopo.smartthing.cloud.controller.filter.CorsFilter;
+import ru.pobopo.smartthing.cloud.controller.filter.SecurityFilter;
 
 @Configuration
 @EnableWebSecurity

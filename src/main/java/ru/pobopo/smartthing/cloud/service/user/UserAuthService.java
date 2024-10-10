@@ -1,4 +1,4 @@
-package ru.pobopo.smartthing.cloud.service;
+package ru.pobopo.smartthing.cloud.service.user;
 
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import ru.pobopo.smartthing.cloud.dto.UserTokenPair;
+import ru.pobopo.smartthing.cloud.controller.dto.UserTokenPair;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
 import ru.pobopo.smartthing.cloud.entity.UserTokenEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;

@@ -1,4 +1,4 @@
-package ru.pobopo.smartthing.cloud.service;
+package ru.pobopo.smartthing.cloud.service.gateway;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -7,11 +7,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.webjars.NotFoundException;
-import ru.pobopo.smartthing.cloud.dto.GatewayDto;
+import ru.pobopo.smartthing.cloud.controller.dto.GatewayDto;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
+import ru.pobopo.smartthing.cloud.service.AuthorisationUtils;
 
 import javax.naming.AuthenticationException;
 import java.time.LocalDateTime;

@@ -1,7 +1,7 @@
 package ru.pobopo.smartthing.cloud.mapper;
 
 import org.mapstruct.Mapper;
-import ru.pobopo.smartthing.cloud.dto.UserDto;
+import ru.pobopo.smartthing.cloud.controller.dto.UserDto;
 import ru.pobopo.smartthing.cloud.entity.UserEntity;
 
 @Mapper(componentModel = "spring")

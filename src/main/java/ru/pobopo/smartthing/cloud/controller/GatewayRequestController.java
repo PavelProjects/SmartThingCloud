@@ -5,12 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import ru.pobopo.smartthing.cloud.annotation.RequiredRole;
-import ru.pobopo.smartthing.cloud.controller.model.SendCommandRequest;
+import ru.pobopo.smartthing.cloud.aspect.RequiredRole;
+import ru.pobopo.smartthing.cloud.controller.dto.SendCommandRequest;
 import ru.pobopo.smartthing.cloud.exception.CommandNotAllowed;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
-import ru.pobopo.smartthing.cloud.service.GatewayRequestService;
+import ru.pobopo.smartthing.cloud.service.gateway.GatewayRequestService;
 import ru.pobopo.smartthing.model.InternalHttpResponse;
 import ru.pobopo.smartthing.model.stomp.*;
 
@@ -22,7 +22,7 @@ import static ru.pobopo.smartthing.cloud.model.Role.Constants.USER;
 
 @Slf4j
 @RestController
-@RequestMapping("/gateway/requests")
+@RequestMapping("/api/gateway/requests")
 @RequiredArgsConstructor
 public class GatewayRequestController {
     private final GatewayRequestService requestService;

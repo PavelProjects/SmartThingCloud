@@ -1,4 +1,4 @@
-package ru.pobopo.smartthing.cloud.controller.model;
+package ru.pobopo.smartthing.cloud.controller.dto;
 
 import lombok.Data;
 

@@ -1,4 +1,4 @@
-package ru.pobopo.smartthing.cloud.dto;
+package ru.pobopo.smartthing.cloud.controller.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

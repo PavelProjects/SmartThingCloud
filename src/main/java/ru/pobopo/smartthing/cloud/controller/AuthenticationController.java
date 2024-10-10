@@ -9,18 +9,14 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import ru.pobopo.smartthing.cloud.annotation.RequiredRole;
-import ru.pobopo.smartthing.cloud.controller.model.AuthRequest;
-import ru.pobopo.smartthing.cloud.controller.model.RefreshRequest;
-import ru.pobopo.smartthing.cloud.controller.model.TokenResponse;
-import ru.pobopo.smartthing.cloud.dto.AuthorizedUserDto;
-import ru.pobopo.smartthing.cloud.dto.UserTokenPair;
+import ru.pobopo.smartthing.cloud.aspect.RequiredRole;
+import ru.pobopo.smartthing.cloud.controller.dto.*;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.mapper.AuthorizedUserMapper;
 import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
-import ru.pobopo.smartthing.cloud.service.GatewayAuthService;
-import ru.pobopo.smartthing.cloud.service.UserAuthService;
+import ru.pobopo.smartthing.cloud.service.gateway.GatewayAuthService;
+import ru.pobopo.smartthing.cloud.service.user.UserAuthService;
 
 import javax.naming.AuthenticationException;
 
@@ -28,7 +24,7 @@ import static ru.pobopo.smartthing.cloud.model.Role.Constants.GATEWAY;
 import static ru.pobopo.smartthing.cloud.model.Role.Constants.USER;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthenticationController {
     private final AuthenticationManager authenticationManager;

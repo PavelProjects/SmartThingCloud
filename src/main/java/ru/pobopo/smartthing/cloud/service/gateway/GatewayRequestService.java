@@ -1,4 +1,4 @@
-package ru.pobopo.smartthing.cloud.service;
+package ru.pobopo.smartthing.cloud.service.gateway;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -15,6 +15,7 @@ import ru.pobopo.smartthing.cloud.exception.GatewayRequestException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
+import ru.pobopo.smartthing.cloud.service.AuthorisationUtils;
 import ru.pobopo.smartthing.model.GatewayInfo;
 import ru.pobopo.smartthing.model.InternalHttpResponse;
 import ru.pobopo.smartthing.model.stomp.*;

@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import ru.pobopo.smartthing.cloud.controller.model.ErrorResponse;
+import ru.pobopo.smartthing.cloud.controller.dto.ErrorResponse;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.CommandNotAllowed;
 import ru.pobopo.smartthing.cloud.exception.GatewayRequestException;

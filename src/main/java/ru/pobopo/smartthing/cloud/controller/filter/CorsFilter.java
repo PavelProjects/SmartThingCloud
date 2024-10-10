@@ -1,4 +1,4 @@
-package ru.pobopo.smartthing.cloud.filter;
+package ru.pobopo.smartthing.cloud.controller.filter;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;

@@ -1,4 +1,4 @@
-package ru.pobopo.smartthing.cloud.annotation;
+package ru.pobopo.smartthing.cloud.aspect;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

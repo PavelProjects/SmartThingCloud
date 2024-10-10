@@ -5,16 +5,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.web.bind.annotation.*;
-import ru.pobopo.smartthing.cloud.annotation.RequiredRole;
-import ru.pobopo.smartthing.cloud.controller.model.CreateGatewayRequest;
-import ru.pobopo.smartthing.cloud.dto.GatewayDto;
+import ru.pobopo.smartthing.cloud.aspect.RequiredRole;
+import ru.pobopo.smartthing.cloud.controller.dto.CreateGatewayRequest;
+import ru.pobopo.smartthing.cloud.controller.dto.GatewayDto;
 import ru.pobopo.smartthing.cloud.entity.GatewayEntity;
 import ru.pobopo.smartthing.cloud.entity.GatewayTokenEntity;
 import ru.pobopo.smartthing.cloud.exception.AccessDeniedException;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.mapper.GatewayMapper;
-import ru.pobopo.smartthing.cloud.service.GatewayAuthService;
-import ru.pobopo.smartthing.cloud.service.GatewayService;
+import ru.pobopo.smartthing.cloud.service.gateway.GatewayAuthService;
+import ru.pobopo.smartthing.cloud.service.gateway.GatewayService;
 
 import javax.naming.AuthenticationException;
 import java.util.List;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 import static ru.pobopo.smartthing.cloud.model.Role.Constants.USER;
 
 @RestController
-@RequestMapping("/gateway/management")
+@RequestMapping("/api/gateway/management")
 @Slf4j
 @RequiredArgsConstructor
 public class GatewayManagementController {
