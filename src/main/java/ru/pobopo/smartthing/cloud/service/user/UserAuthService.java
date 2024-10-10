@@ -39,9 +39,11 @@ public class UserAuthService {
     private final UserDetailsService userDetailsService;
     private final UserTokenRepository tokenRepository;
 
+    // Seconds
     @Value("${jwt.token.ttl}")
     private long tokenTtl;
 
+    // Seconds
     @Value("${jwt.token.refresh.ttl}")
     private long refreshTokenTtl;
 
