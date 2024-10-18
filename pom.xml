@@ -8,16 +8,19 @@
         <version>3.1.3</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
+
     <groupId>ru.pobopo</groupId>
     <artifactId>smart_thing_cloud</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>smart_thing_cloud</name>
-    <description>Smart thing cloud server app</description>
+    <description>SmartThing cloud backend</description>
 
     <properties>
-        <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <start-class>ru.pobopo.smartthing.cloud.SmartThingCloudApplication</start-class>
-        <commons.version>1.5.4</commons.version>
+        <commons.version>1.5.7</commons.version>
     </properties>
 
     <repositories>
