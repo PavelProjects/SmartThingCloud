@@ -138,11 +138,11 @@ public class GatewayRequestService {
                 notification.getDevice(),
                 notification.getNotification()
         );
-        log.info("Sending notification to {}: {}", gateway.getOwner(), notification);
+        log.info("Sending notification to {}: {}", gateway.getOwner(), gatewayNotification);
         stompService.convertAndSendToUser(
             gateway.getOwner().getLogin(),
             NOTIFICATIONS_TOPIC,
-            notification
+                gatewayNotification
         );
     }
 
