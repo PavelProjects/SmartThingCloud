@@ -16,6 +16,7 @@ import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
 import ru.pobopo.smartthing.cloud.repository.GatewayRepository;
 import ru.pobopo.smartthing.cloud.service.AuthorisationUtils;
+import ru.pobopo.smartthing.model.DeviceNotification;
 import ru.pobopo.smartthing.model.GatewayInfo;
 import ru.pobopo.smartthing.model.InternalHttpResponse;
 import ru.pobopo.smartthing.model.stomp.*;
@@ -126,13 +127,17 @@ public class GatewayRequestService {
     }
 
     //todo impl email, push and etc notifications
-    public void notification(AuthenticatedUser authenticatedUser, GatewayNotification notification) throws ValidationException {
+    public void notification(AuthenticatedUser authenticatedUser, DeviceNotification notification) throws ValidationException {
         Optional<GatewayEntity> gatewayOpt = gatewayRepository.findById(authenticatedUser.getGateway().getId());
         if (gatewayOpt.isEmpty()) {
             throw new ValidationException("Can't find gateway from token!");
         }
         GatewayEntity gateway = gatewayOpt.get();
-        notification.setGateway(new GatewayInfo(gateway.getId(), gateway.getName(), gateway.getDescription()));
+        GatewayNotification gatewayNotification = new GatewayNotification(
+                new GatewayInfo(gateway.getId(), gateway.getName(), gateway.getDescription()),
+                notification.getDevice(),
+                notification.getNotification()
+        );
         log.info("Sending notification to {}: {}", gateway.getOwner(), notification);
         stompService.convertAndSendToUser(
             gateway.getOwner().getLogin(),

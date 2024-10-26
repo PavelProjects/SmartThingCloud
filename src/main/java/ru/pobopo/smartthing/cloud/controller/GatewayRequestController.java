@@ -11,6 +11,7 @@ import ru.pobopo.smartthing.cloud.exception.CommandNotAllowed;
 import ru.pobopo.smartthing.cloud.exception.ValidationException;
 import ru.pobopo.smartthing.cloud.model.AuthenticatedUser;
 import ru.pobopo.smartthing.cloud.service.gateway.GatewayRequestService;
+import ru.pobopo.smartthing.model.DeviceNotification;
 import ru.pobopo.smartthing.model.InternalHttpResponse;
 import ru.pobopo.smartthing.model.stomp.*;
 
@@ -66,7 +67,7 @@ public class GatewayRequestController {
     @PostMapping("/notification")
     public void notification(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-            @RequestBody GatewayNotification notification
+            @RequestBody DeviceNotification notification
     ) throws ValidationException {
         requestService.notification(authenticatedUser, Objects.requireNonNull(notification));
     }
