@@ -93,7 +93,7 @@ public class GatewayAuthService {
         }
 
         SimpUser user = userRegistry.getUser(gateway.getId());
-        if (StringUtils.equals(request.getPathInfo(), "/smt-ws") && user != null) {
+        if (StringUtils.equals(request.getPathInfo(), "/st-ws") && user != null) {
             throw new AccessDeniedException("There is already connected gateway by this token");
         }
     }
