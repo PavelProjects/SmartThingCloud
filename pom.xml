@@ -20,13 +20,13 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <start-class>ru.pobopo.smartthing.cloud.SmartThingCloudApplication</start-class>
-        <commons.version>1.5.16</commons.version>
+        <commons.version>0.0.1</commons.version>
     </properties>
 
     <repositories>
         <repository>
-            <id>smt-repo-releases</id>
-            <name>SmartThingApiRepository</name>
+            <id>st-repo-releases</id>
+            <name>SmartThingRepository</name>
             <url>https://pobopo.ru/repo/releases</url>
         </repository>
     </repositories>
@@ -107,7 +107,7 @@
         <!-- https://github.com/PavelProjects/SmartThingApiCommon-->
         <dependency>
             <groupId>ru.pobopo</groupId>
-            <artifactId>smart_thing_api_common</artifactId>
+            <artifactId>smart-thing-gateway-common</artifactId>
             <version>${commons.version}</version>
         </dependency>
     </dependencies>
