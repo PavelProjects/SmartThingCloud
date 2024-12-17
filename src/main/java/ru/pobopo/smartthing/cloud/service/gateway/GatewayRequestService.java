@@ -60,8 +60,8 @@ public class GatewayRequestService {
         if (StringUtils.isBlank(request.getGatewayId())) {
             throw new ValidationException("Gateway id can't be blank!");
         }
-        if (StringUtils.isBlank(request.getDevice().getIp()) && StringUtils.isBlank(request.getDevice().getName())) {
-            throw new ValidationException("Target device name and ip can't be blank!");
+        if (StringUtils.isBlank(request.getDevice())) {
+            throw new ValidationException("Target device can't be blank!");
         }
 
         ResponseMessage responseMessage = sendMessage(request.getGatewayId(), new DeviceRequestMessage(request));
