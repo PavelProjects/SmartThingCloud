@@ -1,25 +1,24 @@
 package ru.pobopo.smartthing.cloud.entity;
 
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.annotations.GenericGenerator;
 
 import java.time.LocalDateTime;
 
+@Data
 @Entity
+@SuperBuilder
 @Table(name = UserEntity.TYPE)
-@Getter
-@Setter
-public class UserEntity {
+@AllArgsConstructor
+@NoArgsConstructor
+public class UserEntity extends BaseEntity {
     public static final String TYPE = "smt_user";
-
-    @Id
-    @GenericGenerator(name = "entity_id", strategy = "ru.pobopo.smartthing.cloud.entity.EntityIdGenerator")
-    @GeneratedValue(generator = "entity_id")
-    @Column
-    private String id;
 
     @Column
     private String login;
@@ -35,7 +34,7 @@ public class UserEntity {
     public String toString() {
         return String.format(
             "User(id=%s, login=%s)",
-            id, login
+            getId(), login
         );
     }
 

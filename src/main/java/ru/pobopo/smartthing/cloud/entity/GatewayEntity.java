@@ -3,7 +3,6 @@ package ru.pobopo.smartthing.cloud.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.GenericGenerator;
 
 import java.time.LocalDateTime;
 
@@ -11,14 +10,8 @@ import java.time.LocalDateTime;
 @Table(name = GatewayEntity.TYPE)
 @Getter
 @Setter
-public class GatewayEntity {
+public class GatewayEntity extends BaseEntity {
     public static final String TYPE = "smt_gateway";
-
-    @Id
-    @GenericGenerator(name = "entity_id", strategy = "ru.pobopo.smartthing.cloud.entity.EntityIdGenerator")
-    @GeneratedValue(generator = "entity_id")
-    @Column
-    private String id;
 
     @Column
     private String name;
@@ -43,7 +36,7 @@ public class GatewayEntity {
     public String toString() {
         return String.format(
                 "(GatewayEntity id=%s, name=%s, description=%s)",
-                id,
+                this.getId(),
                 name,
                 description
         );
