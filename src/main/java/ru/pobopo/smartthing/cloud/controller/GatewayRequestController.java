@@ -28,12 +28,12 @@ public class GatewayRequestController {
     private final GatewayRequestService requestService;
 
     @RequiredRole(roles = USER)
-    @PostMapping("/{gatewayId}")
+    @PostMapping("/{gatewayName}")
     public ResponseEntity<String> sendGatewayRequest(
-            @PathVariable String gatewayId,
+            @PathVariable String gatewayName,
             @RequestBody GatewayRequestMessage requestMessage
     ) throws ValidationException {
-        InternalHttpResponse response = requestService.sendGatewayRequest(gatewayId, requestMessage);
+        InternalHttpResponse response = requestService.sendGatewayRequest(gatewayName, requestMessage);
         return response.toResponseEntity();
     }
 
@@ -52,7 +52,7 @@ public class GatewayRequestController {
             throw new CommandNotAllowed("Command not allowed");
         }
 
-        ResponseMessage response = requestService.sendMessage(messageRequest.getGatewayId(), messageRequest);
+        ResponseMessage response = requestService.sendMessage(messageRequest.getGatewayName(), messageRequest);
         return response.getData();
     }
 

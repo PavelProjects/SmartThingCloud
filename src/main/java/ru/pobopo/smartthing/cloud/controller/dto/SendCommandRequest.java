@@ -7,5 +7,5 @@ import ru.pobopo.smartthing.model.stomp.GatewayCommandMessage;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class SendCommandRequest extends GatewayCommandMessage {
-    private String gatewayId;
+    private String gatewayName;
 }

@@ -105,8 +105,8 @@ public class GatewayService {
         if (StringUtils.isBlank(name)) {
             throw new ValidationException("Gateway name can't be empty!");
         }
-        GatewayEntity entity = gatewayRepository.findByNameAndOwnerLogin(name, AuthorisationUtils.getCurrentUser().getLogin());
-        if (entity != null && old != null && !StringUtils.equals(old.getId(), entity.getId())) {
+        Optional<GatewayEntity> entity = gatewayRepository.findByNameAndOwnerLogin(name, AuthorisationUtils.getCurrentUser().getLogin());
+        if (entity.isPresent() && old != null && !StringUtils.equals(old.getId(), entity.get().getId())) {
             throw new ValidationException("Current user already have gateway with name " + name);
         }
     }

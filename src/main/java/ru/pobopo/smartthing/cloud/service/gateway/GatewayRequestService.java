@@ -40,16 +40,16 @@ public class GatewayRequestService {
 
     private final Map<UUID, Exchanger<ResponseMessage>> resultsMap = new ConcurrentHashMap<>();
 
-    public InternalHttpResponse sendGatewayRequest(String gatewayId, GatewayRequestMessage requestMessage) throws ValidationException {
-        if (StringUtils.isBlank(gatewayId)) {
-            throw new ValidationException("Gateway id is missing!");
+    public InternalHttpResponse sendGatewayRequest(String gatewayName, GatewayRequestMessage requestMessage) throws ValidationException {
+        if (StringUtils.isBlank(gatewayName)) {
+            throw new ValidationException("Gateway name can't be blank");
         }
         Objects.requireNonNull(requestMessage);
         if (StringUtils.isBlank(requestMessage.getMethod()) || StringUtils.isBlank(requestMessage.getUrl())) {
-            throw new ValidationException("Request method and url is required!");
+            throw new ValidationException("Request method and url are required!");
         }
 
-        ResponseMessage responseMessage = sendMessage(gatewayId, requestMessage);
+        ResponseMessage responseMessage = sendMessage(gatewayName, requestMessage);
         return responseMessage.getData();
     }
 
@@ -57,21 +57,22 @@ public class GatewayRequestService {
         Objects.requireNonNull(request, "Device request is missing!");
         Objects.requireNonNull(request.getDevice(), "Device info is missing!");
 
-        if (StringUtils.isBlank(request.getGatewayId())) {
-            throw new ValidationException("Gateway id can't be blank!");
+        if (StringUtils.isBlank(request.getGatewayName())) {
+            throw new ValidationException("Gateway name can't be blank!");
         }
         if (StringUtils.isBlank(request.getDevice())) {
             throw new ValidationException("Target device can't be blank!");
         }
 
-        ResponseMessage responseMessage = sendMessage(request.getGatewayId(), new DeviceRequestMessage(request));
+        ResponseMessage responseMessage = sendMessage(request.getGatewayName(), new DeviceRequestMessage(request));
         return responseMessage.getData();
     }
 
-    public <T extends BaseMessage> ResponseMessage sendMessage(String gatewayId, T message) {
-        Optional<GatewayEntity> gateway = gatewayRepository.findById(gatewayId);
+    @SneakyThrows
+    public <T extends BaseMessage> ResponseMessage sendMessage(String gatewayName, T message) {
+        Optional<GatewayEntity> gateway = gatewayRepository.findByNameAndOwnerLogin(gatewayName, AuthorisationUtils.getCurrentUser().getLogin());
         if (gateway.isEmpty()) {
-            throw new AccessDeniedException("Gateway with id " + gatewayId + " not found!");
+            throw new AccessDeniedException("Gateway with name " + gatewayName + " not found!");
         }
         return sendMessage(gateway.get(), message);
     }
