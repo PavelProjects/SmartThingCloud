@@ -111,7 +111,11 @@ public class GatewayAuthService {
         if (user.getTokenType().equals(TokenType.USER)) {
             GatewayCommandMessage message = new GatewayCommandMessage(GatewayCommand.LOGOUT, null);
             message.setNeedResponse(false);
-            requestService.sendMessage(gatewayId, message);
+            try {
+                requestService.sendMessage(gateway, message);
+            } catch (Throwable t) {
+                log.error("Failed to send gateway logout event: {}", t.getMessage());
+            }
         } else if (userRegistry.getUser(gatewayId) != null) {
             requestService.event(user, GatewayEventType.DISCONNECTED);
         }
