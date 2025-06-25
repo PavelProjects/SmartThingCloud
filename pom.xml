@@ -11,7 +11,7 @@
 
     <groupId>ru.pobopo</groupId>
     <artifactId>smart_thing_cloud</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>smart_thing_cloud</name>
     <description>SmartThing cloud backend</description>
 
@@ -113,6 +113,7 @@
     </dependencies>
 
     <build>
+        <finalName>st-cloud</finalName>
         <plugins>
             <plugin>
                 <groupId>org.asciidoctor</groupId>
